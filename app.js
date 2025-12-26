@@ -250,30 +250,59 @@ function buildActivitatsFromICS(events) {
 // =======================
 // UI funcs
 // =======================
+function getFotoField(f, keys) {
+  for (const k of keys) {
+    if (f && f[k] != null && String(f[k]).trim() !== "") return String(f[k]).trim();
+  }
+  return "";
+}
+
+function ensureCaptionEl() {
+  // Ens asseguram que existeix un element per la llegenda
+  let el = document.getElementById("titolFoto");
+  if (el) return el;
+
+  const img = document.getElementById("imgFotoMes");
+  if (!img) return null;
+
+  el = document.createElement("div");
+  el.id = "titolFoto";
+  el.style.margin = "10px 12px 0 12px";
+  el.style.fontSize = "18px";
+  el.style.lineHeight = "1.2";
+  el.style.fontWeight = "500";
+
+  // Inserta JUST davall la imatge
+  img.insertAdjacentElement("afterend", el);
+  return el;
+}
+
 function setFotoMes(isoYM) {
-  const key = isoToMonthKey(isoYM);
+  const key = isoToMonthKey(isoYM); // "MM-YYYY"
   const f = fotosMes[key];
 
   const img = document.getElementById("imgFotoMes");
-  const titol = document.getElementById("titolFoto");
+  const cap = ensureCaptionEl();
 
   const fallbackPath = `assets/months/2026/${isoYM}.png`;
   const src = (f && f.imatge) ? f.imatge : fallbackPath;
+  if (img) img.src = src;
 
-  img.src = src;
+  // ✅ Accepta diferents noms de columna (per si el Sheet no és exactament "titol"/"autor")
+  const nom = getFotoField(f, ["titol", "títol", "titulo", "title", "nom"]);
+  const autor = getFotoField(f, ["autor", "author", "fotograf", "fotògraf", "credit", "crèdit"]);
 
-  // ✅ Títol + autor davall la foto
-  const nom = (f && f.titol) ? f.titol : "";
-  const autor = (f && f.autor) ? f.autor : "";
-  titol.textContent = autor ? `${nom} — ${autor}` : nom;
+  if (cap) cap.textContent = autor ? `${nom} — ${autor}` : nom;
 
-  img.onclick = (f ? () => obreModalDetallFoto(f) : null);
-
-  img.onerror = () => {
-    img.onerror = null;
-    img.src = "assets/months/2026/default.png";
-  };
+  if (img) {
+    img.onclick = (f ? () => obreModalDetallFoto(f) : null);
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = "assets/months/2026/default.png";
+    };
+  }
 }
+
 
 function obreModalDetallFoto(f) {
   contingutDia.innerHTML = `
