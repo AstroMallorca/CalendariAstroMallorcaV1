@@ -210,3 +210,10 @@ body.nocturn .dies-setmana div{
 .swipe-in-left{ transform: translateX(14%); opacity: 0; }
 .swipe-in-right{ transform: translateX(-14%); opacity: 0; }
 .swipe-reset{ transform: translateX(0); opacity: 1; }
+
+#titolFoto{
+  margin: 10px 12px 0 12px;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 500;
+}
