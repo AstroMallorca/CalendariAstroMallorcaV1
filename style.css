@@ -19,13 +19,15 @@ header {
 }
 
 .dia{
-  min-height: 46px;
-  border-radius: 10px;
-  background: #f3f3f3;
-  display:flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 6px 6px;
+  height: 56px;                 /* ← totes iguals */
+  background: #f1f1f1;
+  padding: 6px;
+  display: grid;
+  grid-template-rows: auto 1fr; /* número a dalt, badges a baix */
+  border-radius: 0;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-sizing: border-box;
+  overflow: hidden;             /* ← mai creix */
 }
 
 .dia .num{
@@ -34,10 +36,13 @@ header {
 }
 
 .badges{
-  display:flex;
+  display: flex;
   gap: 4px;
-  flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+  font-size: 10px;
+  max-height: 16px;      /* ← límit */
+  overflow: hidden;      /* ← si n’hi ha molts, no creix */
 }
 
 .badge{
@@ -128,9 +133,9 @@ body.nocturn .badge{
   font-size: 18px;
 }
 .dia.buit{
+  height: 56px;
   background: transparent !important;
-  box-shadow: none !important;
-  cursor: default;
+  border: 1px solid rgba(0,0,0,0.03);
 }
 /* TÍTOL DEL MES */
 .mes-bar{
