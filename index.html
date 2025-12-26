@@ -1,65 +1,54 @@
-<!-- index.html -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ca">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Calendari AstroMallorca 2026</title>
-  <link rel="stylesheet" href="style.css" />
+
   <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#000000">
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-
-<header class="topbar">
-  <div class="topbar-left">
-    <img src="assets/icons/astromallorca.png" alt="AstroMallorca" class="logo-am">
-  </div>
-
-  <div class="topbar-center">
-    <h1 class="topbar-title">Calendari 2026</h1>
-  </div>
-
-  <div class="topbar-right">
+  <!-- Capçalera -->
+  <header class="topbar">
+    <img class="logo-am" src="assets/icons/astromallorca.png" alt="AstroMallorca">
+    <h1 class="top-title">Calendari 2026</h1>
     <button id="toggleNocturn" class="btn-icon" aria-label="Mode nocturn">
-      <img src="assets/icons/nocturn.png" alt="" class="icon-btn">
+      <img src="assets/icons/nocturn.png" alt="Mode nocturn">
     </button>
+  </header>
+
+  <!-- Zona swipe (foto + caption + mes + graella) -->
+  <main id="swipeArea" class="swipe-area">
+    <div id="swipeInner" class="swipe-inner">
+
+      <!-- Foto del mes -->
+      <img id="imgFotoMes" class="foto-mes" src="" alt="Foto del mes">
+
+      <!-- El caption (títol — autor) es crea i s'insereix via JS JUST AQUI: entre foto i títol del mes -->
+
+      <!-- Títol del mes -->
+      <div id="titolMes" class="titol-mes">GENER 2026</div>
+
+      <!-- Capçalera dies setmana -->
+      <div class="cap-setmana">
+        <div>Dl</div><div>Dt</div><div>Dc</div><div>Dj</div><div>Dv</div><div>Ds</div><div>Dg</div>
+      </div>
+
+      <!-- Graella dies -->
+      <div id="graellaDies" class="graella"></div>
+    </div>
+  </main>
+
+  <!-- Modal detall dia/foto -->
+  <div id="modalDia" class="modal ocult">
+    <div class="modal-card">
+      <button class="tancar" aria-label="Tancar">✕</button>
+      <div id="contingutDia" class="modal-content"></div>
+    </div>
   </div>
-</header>
 
-<div id="swipeArea" class="swipe-area">
-  <div id="swipeInner" class="swipe-inner">
-
-    <!-- FOTO DEL MES -->
-    <section id="fotoMes">
-      <img id="imgFotoMes" src="assets/months/2026/2026-08.png" alt="Foto del mes">
-      <p id="titolFoto">—</p>
-    </section>
-
-    <!-- TÍTOL DEL MES -->
-    <section class="mes-bar">
-      <div id="titolMes" class="titol-mes">AGOST 2026</div>
-    </section>
-
-    <!-- DIES DE LA SETMANA -->
-    <section class="dies-setmana" id="diesSetmana">
-      <div>Dl</div><div>Dt</div><div>Dc</div><div>Dj</div><div>Dv</div><div>Ds</div><div>Dg</div>
-    </section>
-
-    <!-- CALENDARI -->
-    <section id="calendari">
-      <div class="graella" id="graellaDies"></div>
-    </section>
-
-  </div>
-</div>
-
-<!-- MODAL DIA / DETALL -->
-<div id="modalDia" class="modal ocult">
-  <button class="tancar" aria-label="Tornar">←</button>
-  <div id="contingutDia"></div>
-</div>
-
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
