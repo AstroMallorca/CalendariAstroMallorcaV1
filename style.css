@@ -154,5 +154,26 @@ body.nocturn .badge{
 body.nocturn .dies-setmana div{
   opacity: 0.85;
 }
+/* SWIPE */
+.swipe-area{
+  overflow: hidden;
+  touch-action: pan-y; /* permet scroll vertical però detecta swipe horitzontal */
+}
+
+.swipe-inner{
+  will-change: transform, opacity;
+}
+
+.swipe-anim{
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.swipe-out-left{ transform: translateX(-14%); opacity: 0; }
+.swipe-out-right{ transform: translateX(14%); opacity: 0; }
+
+.swipe-in-left{ transform: translateX(14%); opacity: 0; }
+.swipe-in-right{ transform: translateX(-14%); opacity: 0; }
+
+.swipe-reset{ transform: translateX(0); opacity: 1; }
 
 
