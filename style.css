@@ -267,4 +267,24 @@ body.nocturn .comptador-eclipsi__text{
   height: 18px;
   object-fit: contain;
 }
+/* Icones d'efemèrides especials dins el dia */
+.spec-wrap{
+  position: absolute;
+  right: 6px;
+  top: 32px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.spec-mini{
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* Dia d'avui (groc) */
+.dia.avui{
+  outline: 2px solid #ffd400;
+  outline-offset: -2px;
+}
 
