@@ -245,46 +245,6 @@ body.nocturn .info-foto {
 body.nocturn .comptador-eclipsi__text{
   color: #c62828;
 }
-/* EFEMÈRIDES ESPECIALS - ICONES */
-.dia {
-  position: relative;
-}
-.badges { position: relative; }
 
-.dia { position: relative; }
 
-.efemerides-icons{
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  display: flex;
-  gap: 3px;
-  pointer-events: none; /* perquè no bloquegi el click */
-}
-
-.efemeride-icon{
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-/* Icones d'efemèrides especials dins el dia */
-.spec-wrap{
-  position: absolute;
-  right: 6px;
-  top: 32px;
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.spec-mini{
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-
-/* Dia d'avui (groc) */
-.dia.avui{
-  outline: 2px solid #ffd400;
-  outline-offset: -2px;
-}
 
