@@ -264,12 +264,19 @@ body.nocturn .comptador-eclipsi__text{
 .dia .num{ position:relative; z-index:2; }
 .dia .badges{
   position: absolute;
-  left: 50%;
-  top: 55%;               /* ajusta si cal: 50–60% */
-  transform: translate(-50%, -50%);
+  bottom: 4px;
+  right: 4px;
   display: flex;
   gap: 4px;
   pointer-events: none;
   z-index: 2;
 }
-
+.dia .am-mini{
+  position: absolute;
+  left: 50%;
+  top: 55%;                 /* ajustable */
+  transform: translate(-50%, -50%);
+  width: 28px;              /* tamany del logo */
+  height: auto;
+  opacity: 0.9;
+}
