@@ -270,6 +270,12 @@ body.nocturn .comptador-eclipsi__text{
   opacity:0.35;
   pointer-events:none;
   z-index:1;
+  .dia .am-act-center img{
+  width: 30px;     /* 👈 tamany del logo */
+  height: auto;
+  display: block;
+}
+
 }
 .dia .num{ position:relative; z-index:2; }
 .dia .badges{ z-index:2; }
