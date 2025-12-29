@@ -81,7 +81,7 @@ body{
   padding: 6px 0;
 }
 .am-mini{
-  width: 28px;     /* tamany del logo */
+  width: 20px;     /* tamany del logo */
   height: auto;
   object-fit: contain;
   display: block;
