@@ -103,7 +103,7 @@ body{
   border-radius: 0;
   border: 1px solid rgba(0,0,0,0.05);
   box-sizing: border-box;
-
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
@@ -126,11 +126,18 @@ body{
 
 /* BADGES */
 .badges{
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+
   display:flex;
   gap: 4px;
   justify-content: flex-end;
-  align-items: center;
-  max-height: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+
+  max-width: 70%;
+  max-height: 32px;
   overflow: hidden;
 }
 .badge{
@@ -245,6 +252,11 @@ body.nocturn .info-foto {
 body.nocturn .comptador-eclipsi__text{
   color: #c62828;
 }
-
+.esp-icon{
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  display:block;
+}
 
 

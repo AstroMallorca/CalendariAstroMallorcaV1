@@ -126,13 +126,16 @@ function getTimeZoneOffsetMinutes(date, timeZone) {
 
 function zonedDateTimeToUtcMs({year, month, day, hour, minute}, timeZone) {
   // Estimació inicial
-  let utc = Date.UTC(year, month - 1, day, hour, minute, 0);
+  const base = Date.UTC(year, month - 1, day, hour, minute, 0);
+
   // Ajust 1
-  let off = getTimeZoneOffsetMinutes(new Date(utc), timeZone);
-  utc -= off * 60000;
-  // Ajust 2 (per seguretat a canvis DST)
+  let off = getTimeZoneOffsetMinutes(new Date(base), timeZone);
+  let utc = base - off * 60000;
+
+  // Ajust 2 (per seguretat a canvis DST) -> recalcula DES DE base, no tornis a restar sobre utc
   off = getTimeZoneOffsetMinutes(new Date(utc), timeZone);
-  utc -= off * 60000;
+  utc = base - off * 60000;
+
   return utc;
 }
 
@@ -446,7 +449,7 @@ function dibuixaMes(isoYM) {
     cel.innerHTML = `
       <div class="num">${d}</div>
       <div class="badges">
-        ${esp.slice(0,2).map(x => `<span class="badge">${x.codi}</span>`).join("")}
+        ${esp.slice(0,6).map(x => `<img class="esp-icon" src="${x.codi}" alt="${(x.titol||x.clau||"").replace(/"/g,"&quot;")}" title="${(x.titol||"").replace(/"/g,"&quot;")}" loading="lazy">`).join("")}
         ${act.length ? `<img class="am-mini" src="assets/icons/astromallorca.png" alt="AstroMallorca">` : ""}
       </div>
     `;
