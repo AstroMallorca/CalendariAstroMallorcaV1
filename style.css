@@ -66,13 +66,13 @@ body{
   border-radius: 0;
 }
 #titolFoto{
-  margin: 3px 12px 0 12px;
+  margin: 2px 12px 0 12px;
   font-size: 18px;
 }
 
 /* TÍTOL DEL MES */
 .mes-bar{
-  padding: 2px 0 4px 0;
+  padding: 0 0 2px 0;
 }
 .titol-mes{
   text-align: center;
@@ -256,7 +256,7 @@ body.nocturn .info-foto {
   align-items:center;
   justify-content:center;
   gap:8px;
-  margin: 2px 0 4px 0;
+  margin: 0;
   text-align:center;
 }
 
@@ -294,7 +294,7 @@ body.nocturn .comptador-eclipsi__text{
   justify-content:space-between;
   gap: 10px;
   padding: 0 12px;
-  margin: 2px 0 4px 0;
+  margin: 0;
 }
 .nav-mes .comptador-eclipsi{
   margin: 0;
