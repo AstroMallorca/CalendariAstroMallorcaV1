@@ -452,34 +452,6 @@ function obreModalDetallFoto(f) {
   `;
   modal.classList.remove("ocult");
 }
-// === Fases de la lluna (icones) ===
-// IMPORTANT: ajusta els noms de fitxer si al teu /assets tenen un altre nom.
-const MOON_PHASE_ICONS = {
-  nova:        "assets/icons/nova.png",
-  quart_c:     "assets/icons/quart_creixent.png",
-  plena:       "assets/icons/plena.png",
-  quart_m:     "assets/icons/quart_minvant.png"
-};
-
-function getMoonPhaseKey(info){
-  const fase = (info?.lluna?.fase || "").toLowerCase();
-
-  // Detecta les 4 fases “principals” (els “dies indicats” típics)
-  if (fase.includes("nova")) return "nova";
-  if (fase.includes("plena")) return "plena";
-
-  // “quart” pot venir com: "Quart creixent", "Primer quart", etc.
-  if (fase.includes("quart") && (fase.includes("creix") || fase.includes("primer"))) return "quart_c";
-  if (fase.includes("quart") && (fase.includes("minv") || fase.includes("darrer") || fase.includes("últim") || fase.includes("ultim"))) return "quart_m";
-
-  return null;
-}
-
-function getMoonPhaseIcon(info){
-  const key = getMoonPhaseKey(info);
-  if (!key) return null;
-  return MOON_PHASE_ICONS[key] || null;
-}
 
 function dibuixaMes(isoYM) {
   graella.innerHTML = "";
@@ -501,8 +473,6 @@ function dibuixaMes(isoYM) {
     const iso = `${Y}-${mm}-${dd}`;
 
     const info = efemerides[iso] || null;
-    const moonIcon = getMoonPhaseIcon(info);
-    const moonAlt  = info?.lluna?.fase ? info.lluna.fase : "Fase de la lluna";
     const esp = efemeridesEspecials[iso] || [];
     const act = activitats[iso] || [];
 
@@ -528,7 +498,6 @@ function dibuixaMes(isoYM) {
     }
 
    cel.innerHTML = `
-  ${moonIcon ? `<img class="moon-icon" src="${moonIcon}" alt="${moonAlt.replace(/"/g,"&quot;")}" loading="lazy" onerror="this.remove()">` : ""}
   <div class="num">${d}</div>
   ${act.length ? `<img class="am-mini am-act-center" src="assets/icons/astromallorca.png" alt="AstroMallorca">` : ""}
   <div class="badges">

@@ -319,15 +319,3 @@ body.nocturn .comptador-eclipsi__text{
 body.nocturn .btn-nav-mes{
   color: #c62828;
 }
-/* FASES LLUNA (icona a dalt-dreta dins la casella) */
-.moon-icon{
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  z-index: 3;
-  pointer-events: none;
-  opacity: 0.95;
-}
