@@ -635,7 +635,6 @@ cel.innerHTML = `
 `;
     cel.onclick = () => obreDia(iso);
     graella.appendChild(cel);
-  }
 }
 
 function obreDia(iso) {
