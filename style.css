@@ -319,3 +319,21 @@ body.nocturn .comptador-eclipsi__text{
 body.nocturn .btn-nav-mes{
   color: #c62828;
 }
+/* MOON PHASE (QUARTS) */
+.moon-phases{
+  position:absolute;
+  top:4px;
+  right:4px;
+  display:flex;
+  gap:2px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:flex-start;
+  z-index: 2;
+  pointer-events:none;
+}
+.moon-icon{
+  width:16px;
+  height:16px;
+  display:block;
+}
