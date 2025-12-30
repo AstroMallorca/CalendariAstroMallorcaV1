@@ -8,38 +8,51 @@ body{
 
 /* TOP BAR */
 .topbar{
+  --side: 88px; /* ample igual als dos costats (pots provar 80/96 si vols) */
   display:grid;
-  grid-template-columns: 1fr auto 1fr;
-  justify-content: center;
+  grid-template-columns: var(--side) auto var(--side);
   align-items:center;
   padding: 10px 12px;
   gap: 8px;
 }
-.logo-am,
-.icon-btn{
-  width: 50px;
-  height: 50px;
+
+/* Caixes laterals simètriques */
+.topbar-left,
+.topbar-right{
+  width: var(--side);
+  display:flex;
+  align-items:center;
 }
 
+.topbar-left{ justify-content:flex-start; }
+.topbar-right{ justify-content:flex-end; }
+
+/* Títol */
+.topbar-title{
+  margin: 0;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+/* NO deformar imatges: alçada fixa, ample automàtic */
+.logo-am,
+.icon-btn{
+  height: 50px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* Botó: llevam padding per no descompensar el costat dret */
 .btn-icon{
   background: transparent;
   border: 0;
-  padding: 6px;
+  padding: 0;
   border-radius: 10px;
-}
-.topbar-left,
-.topbar-right{
-  width: 60px;           /* mateix ample als dos costats */
-  display: flex;
-  align-items: center;
-}
-
-.topbar-left{
-  justify-content: flex-start;
-}
-
-.topbar-right{
-  justify-content: flex-end;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
 }
 
 /* FOTO DEL MES */
