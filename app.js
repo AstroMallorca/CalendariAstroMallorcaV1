@@ -192,6 +192,66 @@ function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 let efemerides = {};           // local data/efemerides_2026.json (per dia ISO)
 let efemeridesEspecials = {};  // del sheet per dia ISO -> array
 let activitats = {};           // del calendari ICS per dia ISO -> array
+// === EFEMÈRIDES HISTÒRIQUES (locals per mes) ===
+// Fitxers esperats a /data/: efemerides_historic_YYYY_MM.json
+// Es carreguen "lazy" quan obres un dia i es queden en memòria (cache).
+const historicByMonthCache = {}; // { "2026-01": <json|null> }
+
+async function loadHistoricMonth(y, m1){
+  const mm = String(m1).padStart(2, "0");
+  const key = `${y}-${mm}`;
+  if (key in historicByMonthCache) return historicByMonthCache[key];
+
+  const url = `data/efemerides_historic_${y}_${mm}.json`;
+  try{
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+    const data = await r.json();
+    historicByMonthCache[key] = data;
+    return data;
+  }catch(err){
+    console.warn("No he pogut carregar efemèrides històriques:", url, err);
+    historicByMonthCache[key] = null;
+    return null;
+  }
+}
+
+// Intenta trobar les efemèrides del dia sigui quin sigui el format del JSON
+function pickHistoricForISO(monthData, iso){
+  if (!monthData) return [];
+
+  // Format A: objecte amb claus ISO => array / string / objectes
+  if (typeof monthData === "object" && !Array.isArray(monthData)){
+    if (monthData[iso] != null) return monthData[iso];
+    if (monthData.dies && monthData.dies[iso] != null) return monthData.dies[iso];
+    if (monthData.data && monthData.data[iso] != null) return monthData.data[iso];
+  }
+
+  // Format B: array d'items amb camp data/iso/dia
+  if (Array.isArray(monthData)){
+    const found = monthData.filter(it => {
+      if (!it) return false;
+      if (typeof it === "string") return false;
+      const d = it.iso || it.data || it.dia || it.date;
+      return d === iso;
+    });
+    if (found.length) return found;
+  }
+
+  return [];
+}
+
+function renderHistoricItems(items){
+  if (!items) return [];
+  if (typeof items === "string") return [items];
+  if (Array.isArray(items)) return items;
+
+  if (typeof items === "object"){
+    const t = items.text || items.texto || items.descripcio || items.descripció || items.titol || items.title;
+    return t ? [t] : [];
+  }
+  return [];
+}
 let fotosMes = {};             // "MM-YYYY" -> info foto
 let festius = new Map();       // "YYYY-MM-DD" -> "Nom del festiu"
 
@@ -625,7 +685,7 @@ function dibuixaMes(isoYM) {
   }
 }
 
-function obreDia(iso) {
+async function obreDia(iso) {
   const info = efemerides[iso] || {};
   const esp = efemeridesEspecials[iso] || [];
   const act = activitats[iso] || [];
@@ -642,13 +702,28 @@ function obreDia(iso) {
   const actHtml = act.length
     ? `<h3>Activitats AstroMallorca</h3><ul>${act.map(a => `<li><b>${a.titol}</b>${a.lloc ? " — " + a.lloc : ""}${a.url ? ` — <a href="${a.url}" target="_blank">Enllaç</a>` : ""}</li>`).join("")}</ul>`
     : `<h3>Activitats AstroMallorca</h3><p>Cap activitat.</p>`;
+  // === Efemèrides històriques (del teu JSON local) ===
+  const [yStr, mStr] = iso.split("-");
+  const y = Number(yStr);
+  const m1 = Number(mStr);
+  const monthData = await loadHistoricMonth(y, m1);
+  const rawHist = pickHistoricForISO(monthData, iso);
+  const histItems = renderHistoricItems(rawHist);
 
+  const histHtml = histItems.length
+    ? `<h3>Efemèrides històriques</h3><ul>${histItems.map(it => {
+        if (typeof it === "string") return `<li>${it}</li>`;
+        const t = it.text || it.texto || it.descripcio || it.descripció || it.titol || it.title || JSON.stringify(it);
+        return `<li>${t}</li>`;
+      }).join("")}</ul>`
+    : `<h3>Efemèrides històriques</h3><p>Cap efemèride trobada.</p>`;
   contingutDia.innerHTML = `
     <h2>${iso}</h2>
     ${nomFestiu ? `<p>🎉 <b>${nomFestiu}</b></p>` : ""}
     <p><b>Lluna:</b> ${llunaTxt}</p>
     <p>${astrofoto}</p>
     ${espHtml}
+    ${histHtml}
     ${actHtml}
   `;
   modal.classList.remove("ocult");
