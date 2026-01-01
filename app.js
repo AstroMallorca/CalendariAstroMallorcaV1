@@ -85,7 +85,7 @@ function initObserverFromDevice(){
         elevation: pos.coords.altitude ?? 0
       };
       // Si ja hi ha calendari pintat, el repintam per adaptar càlculs al lloc.
-      try { dibuixaMes(STATE.isoYM); } catch(e) {}
+     try { dibuixaMes(mesActual); } catch(e) {}
     },
     () => { /* silenci: mantenim DEFAULT_OBSERVER */ },
     { enableHighAccuracy: true, maximumAge: 6 * 60 * 60 * 1000, timeout: 8000 }
