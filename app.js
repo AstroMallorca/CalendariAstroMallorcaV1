@@ -286,6 +286,42 @@ function ddmmyyyyToISO(s) {
 
   return `${yyyy}-${mm}-${dd}`;
 }
+function isoToDDMMYYYY(iso){
+  const [y,m,d] = iso.split("-");
+  return `${d}-${m}-${y}`;
+}
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function formatHM(dateObj){
+  if (!dateObj) return "—";
+  return `${pad2(dateObj.getHours())}:${pad2(dateObj.getMinutes())}`;
+}
+
+// Calcula sortida/posta amb Astronomy Engine (si està carregada)
+function getRiseSet(bodyName, iso, observer){
+  try{
+    if (typeof Astronomy === "undefined" || !Astronomy.SearchRiseSet) return { rise: null, set: null };
+
+    const [Y,M,D] = iso.split("-").map(Number);
+    // començam el dia a mitjanit local
+    const start = new Date(Y, M-1, D, 0, 0, 0);
+
+    // Rise
+    const riseEvt = Astronomy.SearchRiseSet(bodyName, observer, +1, start, 1);
+    const rise = riseEvt?.date ? new Date(riseEvt.date) : null;
+
+    // Set
+    const setEvt = Astronomy.SearchRiseSet(bodyName, observer, -1, start, 1);
+    const set = setEvt?.date ? new Date(setEvt.date) : null;
+
+    return { rise, set };
+  }catch(e){
+    console.warn("Rise/Set error", bodyName, iso, e);
+    return { rise: null, set: null };
+  }
+}
+
 // === Compte enrere eclipsi (Europe/Madrid, DST inclòs) ===
 const ECLIPSI_TZ = "Europe/Madrid";
 const ECLIPSI_LOCAL = { year: 2026, month: 8, day: 12, hour: 20, minute: 31 };
@@ -739,17 +775,99 @@ async function obreDia(iso) {
       return `<li>${line}</li>`;
     }).join("")}</ul>`
   : `<h3>Efemèrides històriques</h3><p>Cap efemèride trobada.</p>`;
+    // Sol i Lluna: sortida i posta (hora local dispositiu)
+  const sol = getRiseSet("Sun", iso, APP_OBSERVER);
+  const lluna = getRiseSet("Moon", iso, APP_OBSERVER);
 
-  contingutDia.innerHTML = `
-    <h2>${iso}</h2>
-    ${nomFestiu ? `<p>🎉 <b>${nomFestiu}</b></p>` : ""}
-    <p><b>Lluna:</b> ${llunaTxt}</p>
-    <p>${astrofoto}</p>
-    ${espHtml}
-    ${histHtml}
-    ${actHtml}
+  const solTxt = `🌞 Sortida: ${formatHM(sol.rise)} · Posta: ${formatHM(sol.set)}`;
+  const llunaTxt = `🌙 Sortida: ${formatHM(lluna.rise)} · Posta: ${formatHM(lluna.set)}`;
+   contingutDia.innerHTML = `
+    <div class="dia-header">
+      <div class="dia-date">${isoToDDMMYYYY(iso)}</div>
+      ${nomFestiu ? `<div class="dia-festiu">🎉 ${nomFestiu}</div>` : ""}
+    </div>
+
+    <div class="dia-section-title">EFEMÈRIDES</div>
+
+    <!-- Card 1: Efemèrides especials -->
+    <div class="dia-card">
+      <div class="dia-card-title">Efemèrides especials</div>
+      ${esp.length
+        ? `<ul class="dia-list">${esp.map(e => `<li>${(e.titol || e.clau || "")}${e.hora ? ` — ${e.hora}` : ""}</li>`).join("")}</ul>`
+        : `<div class="dia-muted">Cap destacat.</div>`
+      }
+    </div>
+
+    <!-- Card 2: Sol / Lluna / Planetes / Messiers -->
+    <div class="dia-card">
+      <div class="dia-row dia-link" data-href="sol.html?date=${iso}">
+        <div class="dia-row-icon">🌞</div>
+        <div class="dia-row-text">
+          <div class="dia-row-title">Sortida i posta de Sol</div>
+          <div class="dia-row-sub">${solTxt}</div>
+        </div>
+      </div>
+
+      <div class="dia-row dia-link" data-href="lluna.html?date=${iso}">
+        <div class="dia-row-icon">🌙</div>
+        <div class="dia-row-text">
+          <div class="dia-row-title">Sortida i posta de Lluna</div>
+          <div class="dia-row-sub">${llunaTxt}</div>
+        </div>
+      </div>
+
+      <div class="dia-row dia-link" data-href="planetes.html?date=${iso}">
+        <div class="dia-row-icon">🪐</div>
+        <div class="dia-row-text">
+          <div class="dia-row-title">Planetes visibles</div>
+          <div class="dia-row-sub">Obre per veure detalls</div>
+        </div>
+      </div>
+
+      <div class="dia-row dia-link" data-href="messiers.html?date=${iso}">
+        <div class="dia-row-icon">🌌</div>
+        <div class="dia-row-text">
+          <div class="dia-row-title">Messiers visibles</div>
+          <div class="dia-row-sub">Obre per veure detalls</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Efemèrides històriques -->
+    <div class="dia-card">
+      <div class="dia-section-title small">EFEMÈRIDES HISTÒRIQUES</div>
+      ${histItems.length
+        ? `<div class="dia-historic">${histItems.map(it => {
+            if (typeof it === "string") return `<div class="dia-hitem">${it}</div>`;
+            const year = it.year ? `<span class="dia-hyear">${it.year}</span> — ` : "";
+            const title = it.title || it.titol || "";
+            const desc  = it.description || it.descripcio || it.descripció || it.text || "";
+            return `<div class="dia-hitem">${year}<b>${title}</b>${desc ? `: ${desc}` : ""}</div>`;
+          }).join("")}</div>`
+        : `<div class="dia-muted">Cap efemèride trobada.</div>`
+      }
+    </div>
+
+    <!-- Activitats AstroMallorca -->
+    <div class="dia-card">
+      <div class="dia-card-title">Activitat</div>
+      ${act.length
+        ? `<ul class="dia-list">${act.map(a => `<li><b>${a.titol}</b>${a.lloc ? ` — ${a.lloc}` : ""}${a.url ? ` — <a href="${a.url}" target="_blank">Enllaç</a>` : ""}</li>`).join("")}</ul>`
+        : `<div class="dia-muted">Cap activitat.</div>`
+      }
+    </div>
   `;
+
+  // Clickables (sense tocar HTML global)
+  contingutDia.querySelectorAll(".dia-link").forEach(el => {
+    el.addEventListener("click", () => {
+      const href = el.getAttribute("data-href");
+      if (href) window.location.href = href;
+    });
+  });
+
   modal.classList.remove("ocult");
+
 }
 
 document.querySelector(".tancar").onclick = () => modal.classList.add("ocult");
