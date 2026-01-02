@@ -493,3 +493,11 @@ body.nocturn .dia-hitem {
   word-break: break-word; /* farà que salti a 2 línies si cal */
 }
 
+.foto-desc-curta{
+  margin-top: 10px;
+}
+
+.foto-desc-llarga{
+  margin-top: 12px;
+  opacity: .95;
+}
