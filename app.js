@@ -198,23 +198,73 @@ let activitats = {};           // del calendari ICS per dia ISO -> array
 const historicByMonthCache = {}; // { "2026-01": <json|null> }
 
 async function loadHistoricMonth(y, m1){
-  const mm = String(m1).padStart(2, "0");
-  const key = `${y}-${mm}`;
+  // ✅ Nou: efemèrides històriques d'un únic fitxer (CSV o JSON) per tot l'any
+  // Posa el fitxer a /data/ amb un d'aquests noms:
+  //   - data/efemerides_historique_2026_ca_top5.csv
+  //   - data/efemerides_historique_2026_ca_top5.json
+  // (Si existeixen tots dos, prioritzam el JSON)
+  const key = "ALL";
   if (key in historicByMonthCache) return historicByMonthCache[key];
 
-  const url = `data/efemerides_historic_${y}_${mm}.json`;
+  const JSON_URL = "data/efemerides_historique_2026_ca_top5.json";
+  const CSV_URL  = "data/efemerides_historique_2026_ca_top5.csv";
+
+  // helper: passa DD/MM/YYYY o DD-MM-YYYY o ISO a ISO YYYY-MM-DD
+  const anyToISO = (s) => {
+    const t = (s ?? "").toString().trim();
+    if (!t) return null;
+    // ISO directe
+    const mIso = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (mIso) return `${mIso[1]}-${mIso[2]}-${mIso[3]}`;
+    // DD/MM/YYYY o DD-MM-YYYY
+    const mDMY = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if (mDMY){
+      const dd = String(mDMY[1]).padStart(2,"0");
+      const mm = String(mDMY[2]).padStart(2,"0");
+      const yy = mDMY[3];
+      return `${yy}-${mm}-${dd}`;
+    }
+    return null;
+  };
+
   try{
-    const r = await fetch(url, { cache: "no-store" });
+    // 1) Prova JSON
+    const r = await fetch(JSON_URL, { cache: "no-store" });
     if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
     const data = await r.json();
     historicByMonthCache[key] = data;
     return data;
-  }catch(err){
-    console.warn("No he pogut carregar efemèrides històriques:", url, err);
-    historicByMonthCache[key] = null;
-    return null;
+  }catch(errJson){
+    // 2) Fallback CSV
+    try{
+      const rows = await loadCSV(CSV_URL); // reutilitza el parser actual
+      const out = {};
+      for (const r of rows){
+        const iso = anyToISO(r.data || r.date || r.dia || r.iso);
+        if (!iso) continue;
+
+        const item = {
+          prioritat: Number(r.prioritat ?? r.prioridad ?? r.priority ?? "") || undefined,
+          any: Number(r.any ?? r.anno ?? r.year ?? "") || undefined,
+          text: (r.text ?? r.texto ?? r.descripcio ?? r.descripció ?? r.description ?? r.titol ?? r.title ?? "").toString().trim()
+        };
+
+        // si no hi ha text, no afegim res
+        if (!item.text) continue;
+
+        if (!out[iso]) out[iso] = [];
+        out[iso].push(item);
+      }
+      historicByMonthCache[key] = out;
+      return out;
+    }catch(errCsv){
+      console.warn("No he pogut carregar efemèrides històriques (CSV/JSON):", errJson, errCsv);
+      historicByMonthCache[key] = null;
+      return null;
+    }
   }
 }
+
 
 // Intenta trobar les efemèrides del dia sigui quin sigui el format del JSON
 function pickHistoricForISO(monthData, iso){
@@ -809,14 +859,18 @@ async function obreDia(iso) {
       // it és un "event" (type/category/title/year/description)
       if (typeof it === "string") return `<li>${it}</li>`;
 
-      const year = it.year ? `<b>${it.year}</b> — ` : "";
-      const title = it.title || it.titol || it.nom || "";
-      const desc  = it.description || it.descripcio || it.descripció || it.text || it.texto || "";
+      const yv = it.year ?? it.any;
+const year = yv ? `<b>${yv}</b> — ` : "";
 
-      // (opcional) category/type al final, en petit
-      const meta = (it.category || it.type) ? ` <span style="opacity:.7;font-size:.9em">(${[it.category,it.type].filter(Boolean).join(" · ")})</span>` : "";
+const title = it.title || it.titol || it.nom || "";
+const desc  = it.description || it.descripcio || it.descripció || it.text || it.texto || "";
 
-      const line = `${year}${title}${desc ? `: ${desc}` : ""}${meta}`.trim();
+// si hi ha títol i descripció → "Títol: descripció"
+// si només hi ha text → "text"
+const line = (title && desc)
+  ? `${year}${title}: ${desc}${meta}`
+  : `${year}${title || desc}${meta}`;
+
       return `<li>${line}</li>`;
     }).join("")}</ul>`
   : `<h3>Efemèrides històriques</h3><p>Cap efemèride trobada.</p>`;
