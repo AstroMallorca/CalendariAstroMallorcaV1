@@ -204,13 +204,20 @@ function tryAltitudeCrossing(altDeg, direction, startDate){
   const sunrise     = tryRiseSet(+1, startMorning);
 
   let solarNoon = null;
-  let maxAlt = NaN;
-  try{
-    const tr = Astronomy.SearchTransit(Astronomy.Body.Sun, obs, Astronomy.MakeTime(startMorning), 2);
-    solarNoon = tr?.time?.date ? new Date(tr.time.date.getTime()) : null;
-    if (solarNoon) maxAlt = sunAltitudeAt(solarNoon);
-  }catch(e){
+let maxAlt = NaN;
+
+try{
+  const t0 = Astronomy.MakeTime(startMorning);
+  const t  = Astronomy.SearchTransit(Astronomy.Body.Sun, obs, t0, 2); // ✅ retorna AstroTime
+  solarNoon = (t && t.date) ? new Date(t.date.getTime()) : null;
+
+  if (solarNoon) {
+    maxAlt = sunAltitudeAt(solarNoon);
   }
+}catch(e){
+  console.warn("SearchTransit error:", e);
+}
+
 
   const goldenPM    = tryAltitudeCrossing(-4, -1, startEvening);
   const sunset      = tryRiseSet(-1, startEvening);
