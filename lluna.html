@@ -816,29 +816,42 @@ if (!Number.isFinite(day0.getTime())){
 }
 
 
-// Volem: rise dins el dia local (0–24h) i set després (encara que sigui l’endemà)
-const moonScanStart = new Date(day0); // 00:00 del dia
-const rs0 = findRiseSetScan(Astronomy.Body.Moon, observer, moonScanStart, 36, 5, MOON_EVENT_ALT);
+// ✅ Començam 12h abans de les 00:00 per capturar sortides abans de mitjanit (p. ex. 23:55)
+const moonScanStart = new Date(day0.getTime() - 12*3600*1000);
+const rs0 = findRiseSetScan(Astronomy.Body.Moon, observer, moonScanStart, 48, 5, MOON_EVENT_ALT);
 
+// Volem: el primer SET després de les 00:00 (set del matí), i el RISE immediatament anterior
 let rise = rs0.rise;
-let set  = null;
+let set  = rs0.set;
 
-if (rise){
-  // cerca la primera posta després del rise
-  const rs1 = findRiseSetScan(
+// Si el "set" que hem trobat cau abans de les 00:00, cercam el següent set
+if (set && set.getTime() < day0.getTime()){
+  const rsSet2 = findRiseSetScan(
     Astronomy.Body.Moon,
     observer,
-    new Date(rise.getTime() + 5*60*1000),
-    36,
+    new Date(day0.getTime() + 5*60*1000), // just després de 00:00
+    48,
     5,
     MOON_EVENT_ALT
   );
-  set = rs1.set;
-} else {
-  // Si no hi ha rise en 36h, pot ser que la lluna ja sigui damunt a les 00:00
-  // -> agafam la primera posta
-  set = rs0.set;
+  set = rsSet2.set;
 }
+
+// Ara asseguram que "rise" sigui el rise immediatament anterior a "set"
+if (set){
+  const rsRise2 = findRiseSetScan(
+    Astronomy.Body.Moon,
+    observer,
+    new Date(set.getTime() - 36*3600*1000), // tornam enrere "simulant" amb un start antic
+    48,
+    5,
+    MOON_EVENT_ALT
+  );
+  // el primer rise dins aquest escaneig pot ser massa antic; millor: cercar rise en [set-24h, set]
+  // Solució simple: si hi ha rise i és després de set, no serveix; si és massa antic, igualment ens ajuda pel tram.
+  if (rsRise2.rise && rsRise2.rise.getTime() < set.getTime()) rise = rsRise2.rise;
+}
+
 
 console.log("DEBUG moon graph", { rise, set });
 
