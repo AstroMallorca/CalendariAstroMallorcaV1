@@ -367,14 +367,20 @@ function evToDate(x){
   // ja és Date
   if (x instanceof Date) return Number.isFinite(x.getTime()) ? x : null;
 
-  // Search* sovint retorna AstroTime (té .ToDate())
+  // AstroTime (té .ToDate())
   if (typeof x.ToDate === "function"){
     const d = x.ToDate();
     return (d instanceof Date && Number.isFinite(d.getTime())) ? d : null;
   }
 
-  // algunes versions retornen { date: Date }
+  // alguns retorns: { date: Date }
   if (x.date instanceof Date) return Number.isFinite(x.date.getTime()) ? x.date : null;
+
+  // alguns retorns: { time: AstroTime }
+  if (x.time && typeof x.time.ToDate === "function"){
+    const d = x.time.ToDate();
+    return (d instanceof Date && Number.isFinite(d.getTime())) ? d : null;
+  }
 
   return null;
 }
