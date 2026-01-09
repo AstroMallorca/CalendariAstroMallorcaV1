@@ -137,11 +137,54 @@ a:active{ opacity:1; }
   margin: 0 0 6px;
 }
 
+/* ===== Secció gràfica ===== */
+.chartWrap{
+  margin: 18px auto 0;
+  max-width: 520px;
+}
+.chartTitle{
+  text-align:center;
+  color:var(--muted);
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+.chartBox{
+  width: 100%;
+  border-radius: 14px;
+  padding: 10px 6px 4px;
+}
+.chartBox svg{
+  width: 100%;
+  height: 160px;
+  display:block;
+}
+
+/* ===== Resum inferior (només 1 línia) ===== */
+.statsOne{
+  margin: 12px auto 0;
+  max-width: 520px;
+  display:grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 6px 16px;
+  font-size: 26px;
+}
+.statsOne .k{
+  color:var(--text);
+  white-space: nowrap;
+}
+.statsOne .v{
+  font-weight: 800;
+  text-align:right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 #back{ color: var(--text); opacity: .9; }
 
 @media (max-width: 360px){
   .header h1{ font-size: 34px; }
   .kpiGrid{ font-size: 19px; grid-template-columns: minmax(155px,1fr) auto; }
+  .statsOne{ font-size: 22px; grid-template-columns: minmax(240px,1fr) auto; }
 }
   </style>
 </head>
@@ -173,6 +216,18 @@ a:active{ opacity:1; }
       <div class="k">Fase:</div><div class="v" id="kPhaseDeg">—</div>
       <div class="k">Mida aparent:</div><div class="v" id="kSize">—</div>
       <div class="k">Distància:</div><div class="v" id="kDist">—</div>
+    </div>
+
+    <!-- ===== Gràfica (Sortida / Culminació / Posta) ===== -->
+    <div class="chartWrap" id="chartWrap" style="display:none;">
+      <div class="chartTitle" id="chartTitle">Altura max: —</div>
+      <div class="chartBox" id="chartBox"></div>
+    </div>
+
+    <!-- ===== Resum inferior (només 1 línia) ===== -->
+    <div class="statsOne" id="statsOne" style="display:none;">
+      <div class="k">Temps total damunt l’horitzó:</div>
+      <div class="v" id="sAbove">—</div>
     </div>
 
     <div class="err" id="err"></div>
@@ -216,6 +271,12 @@ a:active{ opacity:1; }
     function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
     function deg2rad(d){ return d * Math.PI / 180; }
 
+    // Altituds “estàndard” per rise/set (aprox.)
+    // Sol: -0.833° (refacció + radi solar)
+    // Lluna: -0.3° (refacció + radi lunar aprox.)
+    const SUN_EVENT_ALT  = -0.833;
+    const MOON_EVENT_ALT = -0.3;
+
     function fmtPct(x, decimals = 2){
       if (!Number.isFinite(x)) return "—";
       return `${x.toFixed(decimals)}%`;
@@ -227,6 +288,14 @@ a:active{ opacity:1; }
         minute: "2-digit",
         hour12: false
       }).format(d);
+    }
+
+    function fmtDurationHM(ms){
+      if (!Number.isFinite(ms) || ms < 0) return "—";
+      const totalMin = Math.round(ms / 60000);
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
+      return `${h}h ${m}′`;
     }
 
     function inSameLocalDay(d, day){
@@ -344,6 +413,58 @@ a:active{ opacity:1; }
 
       const dtHours = Math.abs(fullMoonDate.getTime() - minT.getTime()) / (1000*3600);
       return (dtHours <= 24) && (fullKm <= 360000);
+    }
+
+    // ======= Altura a un instant =======
+    function getAltitudeDeg(body, observer, date){
+      const t = Astronomy.MakeTime(date);
+      const eq = Astronomy.Equator(body, t, observer, true, true);
+      const hor = Astronomy.Horizon(t, observer, eq.ra, eq.dec, "normal");
+      return hor.altitude;
+    }
+
+    // ======= Gràfica minimalista (SVG) =======
+    function renderArcChart({ rise, transit, set, altMaxDeg }){
+      const W = 520, H = 160;
+      const padX = 26;
+      const baseY = 105;
+
+      if (!rise || !set || !transit) return "";
+
+      const t0 = rise.getTime();
+      const t1 = set.getTime();
+      const tc = transit.getTime();
+      if (!(t1 > t0)) return "";
+
+      const x = (t) => padX + ((t - t0) / (t1 - t0)) * (W - 2*padX);
+
+      const xR = x(t0), xT = x(tc), xS = x(t1);
+
+      const peakY = 28;
+      const d = `M ${xR} ${baseY} Q ${xT} ${peakY} ${xS} ${baseY}`;
+
+      const stroke = "var(--text)";
+
+      return `
+<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Trajectòria de la Lluna">
+  <line x1="${padX}" y1="${baseY}" x2="${W-padX}" y2="${baseY}" stroke="${stroke}" stroke-width="5" />
+
+  <path d="${d}" fill="none" stroke="${stroke}" stroke-width="8" stroke-linecap="round" />
+
+  <circle cx="${xR}" cy="${baseY}" r="18" fill="var(--bg)" stroke="${stroke}" stroke-width="6"></circle>
+  <circle cx="${xT}" cy="${peakY}" r="18" fill="var(--bg)" stroke="${stroke}" stroke-width="6"></circle>
+  <circle cx="${xS}" cy="${baseY}" r="18" fill="var(--bg)" stroke="${stroke}" stroke-width="6"></circle>
+
+  <text x="${xT}" y="${baseY-22}" text-anchor="middle" font-size="18" fill="${stroke}">
+    Altura max: ${Number.isFinite(altMaxDeg) ? Math.round(altMaxDeg) + "°" : "—"}
+  </text>
+  <text x="${xT}" y="${baseY-2}" text-anchor="middle" font-size="20" fill="${stroke}">
+    ${fmtTimeHM(transit)}
+  </text>
+
+  <text x="${xR}" y="${H-18}" text-anchor="middle" font-size="20" fill="${stroke}">${fmtTimeHM(rise)}</text>
+  <text x="${xS}" y="${H-18}" text-anchor="middle" font-size="20" fill="${stroke}">${fmtTimeHM(set)}</text>
+</svg>`;
     }
 
     // ======= SVG LLUNA (fase + mida) =======
@@ -493,6 +614,54 @@ a:active{ opacity:1; }
         // SVG Lluna
         box.innerHTML = renderMoonSVG({ R_perigeu, R_apogeu, R_now, illum, waxing });
 
+        // ======= Gràfica + "temps total damunt l’horitzó" (NET) =======
+        const chartWrap = document.getElementById("chartWrap");
+        const statsOne  = document.getElementById("statsOne");
+
+        chartWrap.style.display = "none";
+        statsOne.style.display  = "none";
+
+        // Base: migdia local (per trobar events del vespre/matinada sense embolics)
+        const base = new Date(day);
+        base.setHours(12,0,0,0);
+
+        const start = new Date(base.getTime() - 18*3600*1000); // 18h abans del migdia
+        const tStart = Astronomy.MakeTime(start);
+
+        // Rise (proper) i Set (després del rise)
+        const riseEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, tStart, 2, MOON_EVENT_ALT);
+        if (riseEv){
+          const rise = riseEv.date;
+
+          const tAfterRise = Astronomy.MakeTime(new Date(rise.getTime() + 60*1000));
+          const setEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, tAfterRise, 2, MOON_EVENT_ALT);
+
+          if (setEv){
+            const set = setEv.date;
+
+            const trEv = Astronomy.SearchTransit(Astronomy.Body.Moon, observer, Astronomy.MakeTime(rise), 2);
+            if (trEv){
+              const transit = trEv.date;
+
+              let altMax = null;
+              try { altMax = getAltitudeDeg(Astronomy.Body.Moon, observer, transit); } catch(e){}
+
+              const aboveMs = Math.max(0, set.getTime() - rise.getTime());
+
+              document.getElementById("chartTitle").textContent =
+                `Altura max: ${Number.isFinite(altMax) ? Math.round(altMax) + "°" : "—"}`;
+
+              document.getElementById("chartBox").innerHTML =
+                renderArcChart({ rise, transit, set, altMaxDeg: altMax });
+
+              document.getElementById("sAbove").textContent = fmtDurationHM(aboveMs);
+
+              chartWrap.style.display = "";
+              statsOne.style.display  = "";
+            }
+          }
+        }
+
       }catch(e){
         console.error(e);
         errEl.style.display = "block";
@@ -514,3 +683,4 @@ a:active{ opacity:1; }
   </script>
 </body>
 </html>
+tml>
