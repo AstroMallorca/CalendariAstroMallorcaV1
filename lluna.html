@@ -269,6 +269,64 @@ a:active{ opacity:1; }
       return d >= a0 && d <= a1;
     }
 
+    // ========= NORMALITZADORS (FIX D'AVUI) =========
+    function evToDate(x){
+      if (!x) return null;
+
+      // si ve en forma { date: ... } -> recursiu
+      if (x.date) return evToDate(x.date);
+
+      // ja és Date
+      if (x instanceof Date) return Number.isFinite(x.getTime()) ? x : null;
+
+      // AstroTime típic -> .ToDate()
+      if (typeof x.ToDate === "function"){
+        const d = x.ToDate();
+        return (d instanceof Date && Number.isFinite(d.getTime())) ? d : null;
+      }
+
+      // AstroTime alternatiu amb .ut (JD UTC)
+      if (typeof x.ut === "number" && Number.isFinite(x.ut)){
+        const ms = (x.ut - 2440587.5) * 86400000;
+        const d = new Date(ms);
+        return Number.isFinite(d.getTime()) ? d : null;
+      }
+
+      return null;
+    }
+
+    function safeMakeTime(x){
+      if (!x) throw new Error("safeMakeTime: valor buit");
+
+      // ✅ si ja és AstroTime (objecte amb .ut), NO cridis MakeTime
+      if (typeof x === "object" && typeof x.ut === "number" && Number.isFinite(x.ut)){
+        return x;
+      }
+
+      // ✅ event {date: ...}
+      if (x.date) return safeMakeTime(x.date);
+
+      // ✅ Date
+      if (x instanceof Date) return Astronomy.MakeTime(x);
+
+      // ✅ número JD UTC
+      if (typeof x === "number" && Number.isFinite(x)){
+        const ms = (x - 2440587.5) * 86400000;
+        return Astronomy.MakeTime(new Date(ms));
+      }
+
+      // ✅ AstroTime amb ToDate
+      if (typeof x.ToDate === "function"){
+        const d = x.ToDate();
+        if (d instanceof Date && Number.isFinite(d.getTime())){
+          return Astronomy.MakeTime(d);
+        }
+      }
+
+      throw new Error("safeMakeTime: tipus invàlid: " + String(x));
+    }
+
+    // ========= FASE EXACTA (FIX: usar Dates "netes") =========
     function phaseExactEventForDay(day){
       const t0 = Astronomy.MakeTime(day);
       const targets = [
@@ -282,8 +340,11 @@ a:active{ opacity:1; }
         const fwd  = Astronomy.SearchMoonPhase(it.angle, t0,  3);
         const back = Astronomy.SearchMoonPhase(it.angle, t0, -3);
 
-        if (fwd  && inSameLocalDay(fwd.date,  day)) return { name: it.name, date: fwd.date  };
-        if (back && inSameLocalDay(back.date, day)) return { name: it.name, date: back.date };
+        const df = evToDate(fwd);
+        const db = evToDate(back);
+
+        if (df && inSameLocalDay(df, day)) return { name: it.name, date: df };
+        if (db && inSameLocalDay(db, day)) return { name: it.name, date: db };
       }
       return null;
     }
@@ -303,8 +364,9 @@ a:active{ opacity:1; }
     function moonAgeDays(day){
       const t = Astronomy.MakeTime(day);
       const prevNew = Astronomy.SearchMoonPhase(0, t, -35);
-      if (!prevNew) return null;
-      const ms = day.getTime() - prevNew.date.getTime();
+      const prevDate = evToDate(prevNew);
+      if (!prevDate) return null;
+      const ms = day.getTime() - prevDate.getTime();
       return ms / (1000 * 60 * 60 * 24);
     }
 
@@ -315,7 +377,7 @@ a:active{ opacity:1; }
     }
 
     function moonDistanceKmAt(date){
-      const t = Astronomy.MakeTime(date);
+      const t = safeMakeTime(date);   // ✅ FIX
       const v = Astronomy.GeoVector(Astronomy.Body.Moon, t, true);
       const rAU = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
       const AU_KM = (typeof Astronomy.AU_KM === "number") ? Astronomy.AU_KM : 149597870.7;
@@ -362,42 +424,10 @@ a:active{ opacity:1; }
       return (dtHours <= 24) && (fullKm <= 360000);
     }
 
-    // --- helpers robustos per versions diferents ---
-  function evToDate(x){
-  if (!x) return null;
-
-  // si ve en forma { date: ... } -> recursiu
-  if (x.date) return evToDate(x.date);
-
-  // ja és Date
-  if (x instanceof Date) return Number.isFinite(x.getTime()) ? x : null;
-
-  // AstroTime típic (astronomy-engine) -> .ToDate()
-  if (typeof x.ToDate === "function"){
-    const d = x.ToDate();
-    return (d instanceof Date && Number.isFinite(d.getTime())) ? d : null;
-  }
-
-  // AstroTime alternatiu (sense ToDate), amb .ut (JD UTC)
-  if (typeof x.ut === "number" && Number.isFinite(x.ut)){
-    // JD -> Date
-    const ms = (x.ut - 2440587.5) * 86400000;
-    const d = new Date(ms);
-    return Number.isFinite(d.getTime()) ? d : null;
-  }
-
-  return null;
-}
-
-
     function toAstroTime(x){
-      // ja és AstroTime?
       if (x && typeof x === "object" && typeof x.ut === "number") return x;
-      // AstroTime amb ToDate
       if (x && typeof x.ToDate === "function") return x;
-      // Date -> AstroTime
       if (x instanceof Date) return Astronomy.MakeTime(x);
-      // número (Julian day UTC) -> ok
       if (typeof x === "number" && Number.isFinite(x)) return x;
       throw new Error("toAstroTime: valor invàlid: " + String(x));
     }
@@ -405,7 +435,6 @@ a:active{ opacity:1; }
     function getAltitudeDeg(body, observer, dateOrTime){
       const t = toAstroTime(dateOrTime);
       const eq = Astronomy.Equator(body, t, observer, true, true);
-      // "normal" pot variar; deixam fallback si cal
       let hor = null;
       try { hor = Astronomy.Horizon(t, observer, eq.ra, eq.dec, "normal"); } catch(e) {}
       if (!hor) { hor = Astronomy.Horizon(t, observer, eq.ra, eq.dec); }
@@ -528,34 +557,21 @@ a:active{ opacity:1; }
   <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1"></circle>
 </svg>`;
     }
-function toJulianUtc(x){
-  if (x == null) throw new Error("toJulianUtc: valor buit");
 
-  // Ja és número (JD)
-  if (typeof x === "number" && Number.isFinite(x)) return x;
-
-  // Date -> JD UTC (robust, sense MakeTime)
-  if (x instanceof Date){
-    return (x.getTime() / 86400000) + 2440587.5;
-  }
-
-  // AstroTime típic
-  if (typeof x.ut === "number" && Number.isFinite(x.ut)) return x.ut;
-
-  // AstroTime amb ToDate()
-  if (typeof x.ToDate === "function"){
-    const d = x.ToDate();
-    if (d instanceof Date && Number.isFinite(d.getTime())){
-      return (d.getTime() / 86400000) + 2440587.5;
+    function toJulianUtc(x){
+      if (x == null) throw new Error("toJulianUtc: valor buit");
+      if (typeof x === "number" && Number.isFinite(x)) return x;
+      if (x instanceof Date) return (x.getTime() / 86400000) + 2440587.5;
+      if (typeof x.ut === "number" && Number.isFinite(x.ut)) return x.ut;
+      if (typeof x.ToDate === "function"){
+        const d = x.ToDate();
+        if (d instanceof Date && Number.isFinite(d.getTime())){
+          return (d.getTime() / 86400000) + 2440587.5;
+        }
+      }
+      if (x.date) return toJulianUtc(x.date);
+      throw new Error("toJulianUtc: tipus invàlid: " + String(x));
     }
-  }
-
-  // { date: ... }
-  if (x.date) return toJulianUtc(x.date);
-
-  throw new Error("toJulianUtc: tipus invàlid: " + String(x));
-}
-
 
     (function main(){
       const errEl = document.getElementById("err");
@@ -621,82 +637,80 @@ function toJulianUtc(x){
 
         box.innerHTML = renderMoonSVG({ R_perigeu, R_apogeu, R_now, illum, waxing });
 
-// ======= Gràfica + temps total (NET) =======
-const chartWrap = document.getElementById("chartWrap");
-const statsOne  = document.getElementById("statsOne");
-chartWrap.style.display = "none";
-statsOne.style.display  = "none";
+        // ======= Gràfica + temps total =======
+        const chartWrap = document.getElementById("chartWrap");
+        const statsOne  = document.getElementById("statsOne");
+        chartWrap.style.display = "none";
+        statsOne.style.display  = "none";
 
-const base = new Date(day);
-base.setHours(12,0,0,0);
-const startDate = new Date(base.getTime() - 18*3600*1000);
+        const base = new Date(day);
+        base.setHours(12,0,0,0);
+        const startDate = new Date(base.getTime() - 18*3600*1000);
 
-const metersAboveGround = 0;
+        const metersAboveGround = 0;
 
-// startTime robust (AstroTime explícit via {ut: ...})
-const startJD   = toJulianUtc(startDate);
-const startTime = { ut: startJD };
+        const startJD   = toJulianUtc(startDate);
+        const startTime = { ut: startJD };
 
-// 1) RISE
-const riseEv = Astronomy.SearchRiseSet(
-  Astronomy.Body.Moon,
-  observer,
-  +1,
-  startTime,
-  2,
-  metersAboveGround
-);
-const rise = evToDate(riseEv);
+        // 1) RISE
+        const riseEv = Astronomy.SearchRiseSet(
+          Astronomy.Body.Moon,
+          observer,
+          +1,
+          startTime,
+          2,
+          metersAboveGround
+        );
+        const rise = evToDate(riseEv);
 
-if (rise){
-  // 2) SET
-  const afterRiseDate = new Date(rise.getTime() + 60*1000);
-  const afterRiseJD   = toJulianUtc(afterRiseDate);
-  const afterRiseTime = { ut: afterRiseJD };
+        if (rise){
+          // 2) SET
+          const afterRiseDate = new Date(rise.getTime() + 60*1000);
+          const afterRiseJD   = toJulianUtc(afterRiseDate);
+          const afterRiseTime = { ut: afterRiseJD };
 
-  const setEv = Astronomy.SearchRiseSet(
-    Astronomy.Body.Moon,
-    observer,
-    -1,
-    afterRiseTime,
-    2,
-    metersAboveGround
-  );
-  const set = evToDate(setEv);
+          const setEv = Astronomy.SearchRiseSet(
+            Astronomy.Body.Moon,
+            observer,
+            -1,
+            afterRiseTime,
+            2,
+            metersAboveGround
+          );
+          const set = evToDate(setEv);
 
-  if (set){
-    // 3) TRANSIT
-    const riseJD   = toJulianUtc(rise);
-    const riseTime = { ut: riseJD };
+          if (set){
+            // 3) TRANSIT
+            const riseJD   = toJulianUtc(rise);
+            const riseTime = { ut: riseJD };
 
-    const trEv = Astronomy.SearchTransit(
-      Astronomy.Body.Moon,
-      observer,
-      riseTime,
-      2
-    );
-    const transit = evToDate(trEv);
+            const trEv = Astronomy.SearchTransit(
+              Astronomy.Body.Moon,
+              observer,
+              riseTime,
+              2
+            );
+            const transit = evToDate(trEv);
 
-    if (transit){
-      let altMax = null;
-      try { altMax = getAltitudeDeg(Astronomy.Body.Moon, observer, transit); } catch(e){}
+            if (transit){
+              let altMax = null;
+              try { altMax = getAltitudeDeg(Astronomy.Body.Moon, observer, transit); } catch(e){}
 
-      const aboveMs = Math.max(0, set.getTime() - rise.getTime());
+              const aboveMs = Math.max(0, set.getTime() - rise.getTime());
 
-      document.getElementById("chartTitle").textContent =
-        `Altura max: ${Number.isFinite(altMax) ? Math.round(altMax) + "°" : "—"}`;
+              document.getElementById("chartTitle").textContent =
+                `Altura max: ${Number.isFinite(altMax) ? Math.round(altMax) + "°" : "—"}`;
 
-      document.getElementById("chartBox").innerHTML =
-        renderArcChart({ rise, transit, set, altMaxDeg: altMax });
+              document.getElementById("chartBox").innerHTML =
+                renderArcChart({ rise, transit, set, altMaxDeg: altMax });
 
-      document.getElementById("sAbove").textContent = fmtDurationHM(aboveMs);
+              document.getElementById("sAbove").textContent = fmtDurationHM(aboveMs);
 
-      chartWrap.style.display = "";
-      statsOne.style.display  = "";
-    }
-  }
-}
-
+              chartWrap.style.display = "";
+              statsOne.style.display  = "";
+            }
+          }
+        }
 
       }catch(e){
         console.error(e);
