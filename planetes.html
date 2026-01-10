@@ -234,7 +234,11 @@
         return null;
       }
     }
-
+function planetRadius(name){
+  if (name === "Júpiter") return 16;   // més gran
+  if (name === "Saturn")  return 13;   // una mica més gran també
+  return 10;                           // resta
+}
     // --- planet config ---
  // --- planet config ---
 
@@ -392,14 +396,16 @@ ctx.restore();
 if (pl.name === "Saturn") {
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(-0.4); // inclinació dels anells
+  ctx.rotate(-0.4);
   ctx.strokeStyle = stroke;
   ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.85;
   ctx.beginPath();
   ctx.ellipse(0, 0, pr * 1.8, pr * 0.7, 0, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
+
 
 // 🪐 Planeta
 ctx.save();
@@ -412,11 +418,6 @@ ctx.strokeStyle = stroke;
 ctx.stroke();
 ctx.restore();
 
-}
-function planetRadius(name){
-  if (name === "Júpiter") return 16;   // més gran
-  if (name === "Saturn")  return 13;   // una mica més gran també
-  return 10;                           // resta
 }
 
 
