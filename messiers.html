@@ -372,9 +372,6 @@ const enriched = catalog.map(obj => {
       if(o.state === "nodata"){
   rs3.textContent = "Sense coordenades (catàleg incomplet)";
   rs3.classList.add("warn");
-}else if(o.state === "circumpolar"){
-  ...
-}
 
       if(o.state === "circumpolar"){
         rs3.textContent = "Circumpolar (sempre per damunt del llindar)";
