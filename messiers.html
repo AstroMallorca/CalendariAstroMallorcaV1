@@ -126,8 +126,8 @@
 
 .title{
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
 }
 .sub{
   white-space: nowrap;
@@ -418,7 +418,7 @@ tag.textContent = `${visTxt}${Number.isFinite(o.mag) ? ` · mag ${o.mag}` : ""}`
   rs3.textContent = "No puja per damunt del llindar avui";
   rs3.classList.add("warn");
 } else {
-  rs3.textContent = o.sunset ? `Posta de Sol: ${fmtHHMM(o.sunset)}` : "";
+  rs3.textContent = "";
 }
 
 
