@@ -236,16 +236,30 @@
     }
 
     // --- planet config ---
-    const planets = [
-      { name:"Mercuri", body: Astronomy.Body.Mercury, color:"#1f77b4", a:0.387 },
-      { name:"Venus",   body: Astronomy.Body.Venus,   color:"#ff7f0e", a:0.723 },
-      { name:"Terra",   body: Astronomy.Body.Earth,   color:"#2ca02c" },
-      { name:"Mart",    body: Astronomy.Body.Mars,    color:"#d62728", a:1.524 },
-      { name:"Júpiter", body: Astronomy.Body.Jupiter, color:"#9467bd", a:5.204 },
-      { name:"Saturn",  body: Astronomy.Body.Saturn,  color:"#bcbd22", a:9.582 },
-      { name:"Urà",     body: Astronomy.Body.Uranus,  color:"#17becf", a:19.201 },
-      { name:"Neptú",   body: Astronomy.Body.Neptune, color:"#2a3fff", a:30.047 },
-    ];
+ // --- planet config ---
+
+// TAULA: (sense Terra; la Terra no sol interessar per sortida/posta com “planeta”)
+const planetsTable = [
+  { name:"Mercuri", body: Astronomy.Body.Mercury, color:"#1f77b4" },
+  { name:"Venus",   body: Astronomy.Body.Venus,   color:"#ff7f0e" },
+  { name:"Mart",    body: Astronomy.Body.Mars,    color:"#d62728" },
+  { name:"Júpiter", body: Astronomy.Body.Jupiter, color:"#9467bd" },
+  { name:"Saturn",  body: Astronomy.Body.Saturn,  color:"#bcbd22" },
+  { name:"Urà",     body: Astronomy.Body.Uranus,  color:"#17becf" },
+  { name:"Neptú",   body: Astronomy.Body.Neptune, color:"#2a3fff" },
+];
+
+// DIAGRAMA: 8 òrbites (inclou Terra)
+const planetsDiagram = [
+  { name:"Mercuri", body: Astronomy.Body.Mercury, color:"#1f77b4" },
+  { name:"Venus",   body: Astronomy.Body.Venus,   color:"#ff7f0e" },
+  { name:"Terra",   body: Astronomy.Body.Earth,   color:"#2ca02c" },
+  { name:"Mart",    body: Astronomy.Body.Mars,    color:"#d62728" },
+  { name:"Júpiter", body: Astronomy.Body.Jupiter, color:"#9467bd" },
+  { name:"Saturn",  body: Astronomy.Body.Saturn,  color:"#bcbd22" },
+  { name:"Urà",     body: Astronomy.Body.Uranus,  color:"#17becf" },
+  { name:"Neptú",   body: Astronomy.Body.Neptune, color:"#2a3fff" },
+];
 
     // --- run ---
     (function main(){
@@ -319,6 +333,10 @@
 
         const W = canvas.width, H = canvas.height;
         const cx = W/2, cy = H/2;
+        // temps per a posicions heliocèntriques (estable)
+const t = new Date(yyyy_mm_dd + "T12:00:00Z");
+const astroT = Astronomy.MakeTime(t);
+
 
        // òrbites NO a escala (separació uniforme)
 const pad = 60;
@@ -339,8 +357,6 @@ for (let i = 0; i < count; i++){
   ctx.stroke();
 }
 ctx.restore();
-
-        ctx.restore();
 
         // Sol al centre
         ctx.save();
