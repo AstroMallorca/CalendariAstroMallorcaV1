@@ -170,6 +170,47 @@ function fmtHHMM(d){
   const mm = m % 60;
   return `${h}h ${pad2(mm)}'`;
 }
+  function normMessier(m){
+  const s = (m ?? "").toString().trim();
+  if(!s) return "";
+  // "M027" -> "M27"
+  return s.replace(/^M0+/, "M");
+}
+
+function buildInfoLine(o){
+  const type = (o.type ?? "").toString().trim();
+  const cst  = (o.constelation_latin ?? "").toString().trim();
+  const dist = (o.distance_ly ?? "").toString().trim();
+  const size = (o.size ?? "").toString().trim();
+  const ngc  = (o.ngc ?? "").toString().trim();
+  const disc = (o.discovered ?? "").toString().trim();
+  const year = (o.year ?? "").toString().trim();
+
+  const parts = [];
+
+  if(type) parts.push(type);
+
+  // "de la constel·lacio X"
+  if(cst) parts.push(`de la constel·lacio ${cst}`);
+
+  // "a 980 al"
+  if(dist) parts.push(`a ${dist} al`);
+
+  // "de 348,0''" (o el que hi hagi a size)
+  if(size) parts.push(`de ${size}`);
+
+  // "NGC 6853"
+  if(ngc) parts.push(`NGC ${ngc}`);
+
+  // "descobert per Messier el 1764"
+  if(disc && year) parts.push(`descobert per ${disc} el ${year}`);
+  else if(disc) parts.push(`descobert per ${disc}`);
+  else if(year) parts.push(`el ${year}`);
+
+  // Uneix amb comes
+  return parts.join(", ");
+}
+
 function parseISODateLocal(iso){
   const [y,m,d] = (iso||"").split("-").map(Number);
   if(!y||!m||!d) return null;
@@ -354,7 +395,8 @@ return {
 
 
     // Ordena: més minuts visibles el vespre primer
-    enriched.sort((a,b) => (b.visEveningMin - a.visEveningMin) || (String(a.id).localeCompare(String(b.id))));
+   enriched.sort((a,b) => (b.visEveningMin - a.visEveningMin) ||
+  String(a.messier || a.id).localeCompare(String(b.messier || b.id)));
 
     // Render
     const list = document.getElementById("list");
@@ -367,8 +409,10 @@ return {
       const img = document.createElement("img");
       img.className = "thumb";
       img.loading = "lazy";
-      const common = (o.desc || "").trim();
-      img.alt = common ? `${o.id} ${common}` : `${o.id}`;
+      const mess = normMessier(o.messier || o.id);
+const common = (o.desc || "").trim();
+      
+img.alt = common ? `${mess} ${common}` : `${mess}`;
       img.src = o.img || "";
       img.onerror = () => { img.style.display = "none"; };
 
@@ -376,10 +420,11 @@ return {
       mid.className = "mid";
       const h = document.createElement("p");
       h.className = "title";
-      h.textContent = common ? `${o.id} · ${common}` : `${o.id}`;
-      const sub = document.createElement("p");
-      sub.className = "sub";
-      sub.textContent = o.type || "";
+     h.textContent = common ? `${mess} · ${common}` : `${mess}`;
+
+const sub = document.createElement("p");
+sub.className = "sub";
+sub.textContent = buildInfoLine(o) || "";   // ← aquí va la frase llarga
 
       const tag = document.createElement("div");
       tag.className = "tag";
