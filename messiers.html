@@ -125,14 +125,17 @@
 }
 
 .title{
-  white-space: nowrap;
+  white-space: normal;      /* ✅ pot fer 2 línies si cal */
   overflow: visible;
   text-overflow: clip;
 }
+
 .sub{
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;      /* ✅ multi-línia */
+  overflow: visible;        /* ✅ fora ellipsis */
+  text-overflow: clip;
+  line-height: 1.25;
+  margin: 4px 0 0;
 }
 
   </style>
@@ -170,46 +173,66 @@ function fmtHHMM(d){
   const mm = m % 60;
   return `${h}h ${pad2(mm)}'`;
 }
-  function normMessier(m){
+function normMessier(m){
   const s = (m ?? "").toString().trim();
   if(!s) return "";
-  // "M027" -> "M27"
-  return s.replace(/^M0+/, "M");
+  return s.replace(/^M0+/, "M");   // "M027" -> "M27"
 }
 
-function buildInfoLine(o){
+function fmtDistanceLY(v){
+  if(v === null || v === undefined || v === "") return "";
+  const n = Number(v);
+  if(!Number.isFinite(n) || n <= 0) return "";
+
+  if(n >= 1_000_000){
+    const m = n / 1_000_000;
+    // 23.0 -> "23M", 23.5 -> "23.5M"
+    const txt = (Math.abs(m - Math.round(m)) < 0.05) ? String(Math.round(m)) : m.toFixed(1);
+    return `${txt}M al`;
+  }
+  // sense decimals
+  return `${Math.round(n)} al`;
+}
+
+function cleanNGC(s){
+  const v = (s ?? "").toString().trim();
+  if(!v) return "";
+  // Si ja ve com "NGC 6853" no afegim res
+  return v.replace(/^NGC\s*/i, "NGC ");
+}
+
+function buildInfoHTML(o){
   const type = (o.type ?? "").toString().trim();
-  const cst  = (o.constelation_latin ?? "").toString().trim();
-  const dist = (o.distance_ly ?? "").toString().trim();
+  const cst  = (o.constellation_latin ?? "").toString().trim();  // ✅ camp correcte
+  const dist = fmtDistanceLY(o.distance_ly);                      // ✅ format M al
   const size = (o.size ?? "").toString().trim();
-  const ngc  = (o.ngc ?? "").toString().trim();
-  const disc = (o.discovered ?? "").toString().trim();
+  const ngc  = cleanNGC(o.ngc);
+  const disc = (o.discoverer ?? "").toString().trim();            // ✅ camp correcte
   const year = (o.year ?? "").toString().trim();
 
-  const parts = [];
+  const line1 = [];
+  if(type) line1.push(type);
+  if(cst)  line1.push(`constel·lació ${cst}`);
 
-  if(type) parts.push(type);
+  const line2 = [];
+  if(dist) line2.push(dist);
+  if(size) line2.push(size.startsWith("de ") ? size : `de ${size}`);
 
-  // "de la constel·lacio X"
-  if(cst) parts.push(`de la constel·lacio ${cst}`);
+  const line3 = [];
+  if(ngc) line3.push(ngc);
+  if(disc && year) line3.push(`descobert per ${disc} (${year})`);
+  else if(disc)    line3.push(`descobert per ${disc}`);
+  else if(year)    line3.push(year);
 
-  // "a 980 al"
-  if(dist) parts.push(`a ${dist} al`);
+  // Retornam HTML amb <br> només si hi ha contingut
+  const lines = [];
+  if(line1.length) lines.push(line1.join(" · "));
+  if(line2.length) lines.push(line2.join(" · "));
+  if(line3.length) lines.push(line3.join(" · "));
 
-  // "de 348,0''" (o el que hi hagi a size)
-  if(size) parts.push(`de ${size}`);
-
-  // "NGC 6853"
-  if(ngc) parts.push(`NGC ${ngc}`);
-
-  // "descobert per Messier el 1764"
-  if(disc && year) parts.push(`descobert per ${disc} el ${year}`);
-  else if(disc) parts.push(`descobert per ${disc}`);
-  else if(year) parts.push(`el ${year}`);
-
-  // Uneix amb comes
-  return parts.join(", ");
+  return lines.join("<br>");
 }
+
 
 function parseISODateLocal(iso){
   const [y,m,d] = (iso||"").split("-").map(Number);
@@ -424,7 +447,7 @@ img.alt = common ? `${mess} ${common}` : `${mess}`;
 
 const sub = document.createElement("p");
 sub.className = "sub";
-sub.textContent = buildInfoLine(o) || "";   // ← aquí va la frase llarga
+sub.innerHTML = buildInfoHTML(o) || "";
 
       const tag = document.createElement("div");
       tag.className = "tag";
