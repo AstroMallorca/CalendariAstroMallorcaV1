@@ -1238,6 +1238,8 @@ efemerides = e.dies || {};
 // ✅ Efemèrides especials (icones) des de CSV LOCAL
 const espRows = await loadCSVLocal("data/efemerides_2026_data_unica_importancia.csv");
 efemeridesEspecials = buildEfemeridesEspecials(espRows);
+    console.log("03-01-2026:", efemeridesEspecials["2026-01-03"]);
+
 
     // sheets (fotos + efemèrides + festius)
   const [fotos, fest] = await Promise.all([
