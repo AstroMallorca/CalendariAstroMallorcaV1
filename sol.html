@@ -156,7 +156,38 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
+.titlebar{
+  display:grid;
+  grid-template-columns: 52px 1fr 52px;
+  align-items:center;
+  gap: 8px;
+  margin-top: 6px;
+}
 
+.titlecenter{
+  min-width: 0;
+}
+
+.navbtn{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 34px;
+  line-height: 1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.navbtn:active{
+  transform: scale(0.98);
+}
 </style>
 </head>
 
@@ -164,8 +195,17 @@
 <div class="wrap">
   <a href="#" id="back">← Tornar</a>
 
-  <h1 class="center">El Sol avui</h1>
-<div class="meta center big" id="meta"></div>
+ <div class="titlebar">
+  <button class="navbtn" id="prevDay" aria-label="Dia anterior">‹</button>
+
+  <div class="titlecenter">
+    <h1 class="center">El Sol avui</h1>
+    <div class="meta center big" id="meta"></div>
+  </div>
+
+  <button class="navbtn" id="nextDay" aria-label="Dia següent">›</button>
+</div>
+
 
   <img class="hero center-img" src="assets/icons/sun.png" alt="Sol">
 
@@ -217,6 +257,27 @@
         e.preventDefault();
         window.history.back();
       });
+function isoFromLocalDate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+
+function goDay(delta){
+  const d = new Date(day0.getFullYear(), day0.getMonth(), day0.getDate());
+  d.setDate(d.getDate() + delta);
+
+  const params = new URLSearchParams(location.search);
+  params.set("date", isoFromLocalDate(d));
+
+  // mantenim lat/lon/elev tal com venien (si no hi eren, no inventam res)
+  const url = `${location.pathname}?${params.toString()}`;
+  location.href = url;
+}
+
+document.getElementById("prevDay").addEventListener("click", () => goDay(-1));
+document.getElementById("nextDay").addEventListener("click", () => goDay(+1));
 
       function fmtHM(date){
         if (!date) return "--:--";
