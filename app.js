@@ -796,7 +796,12 @@ function setFotoMes(isoYM) {
   }
 
   // Si vols que en clicar la foto s'obri el detall (ja ho tens)
-  img.onclick = (f ? () => obreModalDetallFoto(f) : null);
+  img.onclick = null; // ✅ ja no obrim modal des de la portada
+
+const link = document.getElementById("linkFotoMes");
+if (link) {
+  link.href = `foto.html?ym=${encodeURIComponent(isoYM)}`;
+}
 
   img.onerror = () => {
     img.onerror = null;
