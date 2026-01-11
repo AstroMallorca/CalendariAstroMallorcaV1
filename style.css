@@ -168,19 +168,24 @@ body.nocturn .dia.altre-mes .num{
 }
 
 /* BADGES */
+/* BADGES: icones d’efemèrides (a baix en línia, fins a 3) */
 .badges{
   position: absolute;
+  left: 4px;
   right: 4px;
   bottom: 4px;
 
   display: flex;
-  flex-direction: column;   /* ✅ vertical */
+  flex-direction: row;     /* ✅ horitzontal */
+  flex-wrap: nowrap;       /* ✅ MAI una damunt l’altra */
+  justify-content: center; /* ✅ centrades */
+  align-items: center;
   gap: 4px;
-  align-items: flex-end;
 
-  max-height: 70%;
-  overflow: hidden;
+  overflow: hidden;        /* si mai n’hi ha més, no desquadra */
+  pointer-events: none;    /* no interfereix amb el click del dia */
 }
+
 
 .badge{
   font-size: 10px;
