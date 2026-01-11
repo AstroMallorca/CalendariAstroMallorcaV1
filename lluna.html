@@ -18,6 +18,9 @@
   /* colors FIXES (no canvien en mode nocturn) */
   --perigeuFixed:#ffd400;
   --apogeuFixed:#19d6ff;
+  --perigeu: var(--perigeuFixed);
+  --apogeu:  var(--apogeuFixed);
+
 }
 
 /* NOCTURN (heretat de l'app: body.nocturn) */
@@ -477,14 +480,6 @@ h1{
       const start = new Date(base); start.setHours(0,0,0,0);
       const scan = findRiseSetScan(body, observer, start, 36, 5, 0);
       return { rise: scan.rise, set: scan.set };
-    }
-
-    // ======= Dibuix SVG Lluna (idèntic al que ja tens) =======
-    function renderMoonSVG({ R_perigeu, R_apogeu, R_now, illum, waxing }){
-      // ... (aquí mantenim la teva funció tal com la tenies)
-      // IMPORTANT: aquesta funció ja existia al teu fitxer original
-      // i aquí no la canvio; si la tens més amunt, deixa-la tal qual.
-      return window.renderMoonSVG({ R_perigeu, R_apogeu, R_now, illum, waxing });
     }
 
     (async () => {
