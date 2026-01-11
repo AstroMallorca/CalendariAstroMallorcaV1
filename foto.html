@@ -90,6 +90,25 @@ h1{
 .credits-line b{
   font-weight: 700;
 }
+.desc-card{
+  margin-top: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 14px;
+}
+
+.desc-curta{
+  font-size: 16px;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.desc-llarga{
+  font-size: 16px;
+  line-height: 1.45;
+  opacity: 0.95;
+}
 
     img{
       width:100%;
@@ -113,6 +132,10 @@ h1{
     <div id="techLine" class="tech-line"></div>
     <div id="llocLine" class="lloc-line"></div>
     <div id="creditsLine" class="credits-line"></div>
+  </div>
+    <div id="descCard" class="desc-card" style="display:none;">
+    <div id="descCurta" class="desc-curta"></div>
+    <div id="descLlarga" class="desc-llarga"></div>
   </div>
 </div>
 
@@ -265,6 +288,39 @@ if (infoCard){
     infoCard.style.display = "block";
   }else{
     infoCard.style.display = "none";
+  }
+}
+// === REQUADRE DESCRIPCIÓ (curta + llarga) ===
+const descCurtaTxt = clean(
+  f?.descripcio ??
+  f?.descripcio_curta ??
+  f?.descripcion_curta
+);
+
+const descLlargaTxt = clean(
+  f?.descripcio_llarga ??
+  f?.descripcion_llarga
+);
+
+const descCard = document.getElementById("descCard");
+const descCurtaEl = document.getElementById("descCurta");
+const descLlargaEl = document.getElementById("descLlarga");
+
+const hasDesc = !!(descCurtaTxt || descLlargaTxt);
+
+if (descCard){
+  if (hasDesc){
+    if (descCurtaEl){
+      descCurtaEl.textContent = descCurtaTxt || "";
+      descCurtaEl.style.display = descCurtaTxt ? "block" : "none";
+    }
+    if (descLlargaEl){
+      descLlargaEl.textContent = descLlargaTxt || "";
+      descLlargaEl.style.display = descLlargaTxt ? "block" : "none";
+    }
+    descCard.style.display = "block";
+  }else{
+    descCard.style.display = "none";
   }
 }
 
