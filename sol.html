@@ -334,8 +334,7 @@
         `<b>Elevació màxima:</b> ${Number.isFinite(maxAlt) ? maxAlt.toFixed(1) + "°" : "—"}\n` +
         `<b>Distància del sol:</b> ${Number.isFinite(distMillionKm) ? distMillionKm.toFixed(3) + " M km" : "—"}`;
 
-      document.getElementById("meta").textContent =
-        `${dateStr || ""} · lat ${observer.latitude.toFixed(4)}, lon ${observer.longitude.toFixed(4)} · elev ${Math.round(observer.elevation)} m`;
+      document.getElementById("meta").textContent = (dateStr || "");
 
       const list = document.getElementById("list");
 
