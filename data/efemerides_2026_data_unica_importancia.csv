@@ -1,4 +1,4 @@
-data;tipus;titol;codi;Hora;importancia
+endata;tipus;titol;codi;Hora;importancia
 01-01-2026;lluna;Lluna en perigeu;;;5
 02-01-2026;asteroide;Harmonia en oposició;;;8
 02-01-2026;lluna;La Lluna 0,5° al sud d’Elnath (ocultació);;;5
@@ -70,7 +70,7 @@ data;tipus;titol;codi;Hora;importancia
 11-03-2026;planeta;Júpiter estacionari en ascensió recta;;;6
 13-03-2026;asteroide;Fortuna en oposició;;;8
 13-03-2026;lluna;La Lluna 0,8° al sud de Nunki (ocultació);;;5
-14-03-2026;Dia internacional de les matemàtiques i del Número Pi;;;5
+14-03-2026;Esdeveniment;Dia internacional de les matemàtiques i del Número Pi;;;5
 15-03-2026;lluna;La Lluna 0,9° al nord de Metis (ocultació);;;5
 17-03-2026;lluna;La Lluna 2° al sud de Mercuri;;;5
 19-03-2026;lluna;Lluna nova;;;5
@@ -115,13 +115,13 @@ data;tipus;titol;codi;Hora;importancia
 20-04-2026;planeta;Mercuri 0,5° al sud de Saturn;;;6
 20-04-2026;planeta;Mercuri 2° al sud de Mart;;;6
 21-04-2026;lluna;La Lluna 0,6° al sud d’Elnath (ocultació);;;5
-22-04-2026;Dia internacional de la mare Terra:::8
+22-04-2026;Esdeveniment;Dia internacional de la mare Terra:::8
 22-04-2026;lluna;La Lluna 3° al nord de Júpiter;;;5
 22-04-2026;meteors;Màxim de les Lírides;;;9
 23-04-2026;planeta;Venus 4° al sud d’Alcióne;;;6
 24-04-2026;lluna;Quart creixent;;;5
 24-04-2026;planeta;Venus 0,8° al nord d’Urà;;;6
-25-04-2026;Dia mundial de l'astronomia;;;5
+25-04-2026;Esdeveniment;Dia mundial de l'astronomia;;;5
 26-04-2026;lluna;La Lluna 0,2° al nord de Règul (ocultació);;;5
 01-05-2026;lluna;Lluna plena;;;5
 03-05-2026;planeta;Venus 7° al nord d’Aldebaran;;;6
@@ -158,7 +158,7 @@ data;tipus;titol;codi;Hora;importancia
 02-06-2026;asteroide;Juno estacionari en ascensió recta;;;8
 03-06-2026;lluna;La Lluna 0,4° al sud de Nunki (ocultació);;;5
 04-06-2026;planeta;Júpiter 6° al sud de Pòl·lux;;;6
-05-06-2026;Dia mundial del Medi Ambient;;;5
+05-06-2026;Esdeveniment;Dia mundial del Medi Ambient;;;5
 07-06-2026;lluna;La Lluna 0,8° al nord d’Astrea (ocultació);;;5
 08-06-2026;lluna;Quart minvant;;;5
 08-06-2026;planeta;Venus 5° al sud de Pòl·lux;;;6
@@ -187,7 +187,7 @@ data;tipus;titol;codi;Hora;importancia
 28-06-2026;asteroide;Victòria en conjunció amb el Sol;;;8
 29-06-2026;lluna;Lluna plena (dia 30 hora oficial);;;5
 29-06-2026;planeta;Mercuri estacionari en ascensió recta;;;6
-30-06-2036;Dia mundial dels asteroides;;;6
+30-06-2036;Esdeveniment;Dia mundial dels asteroides;;;6
 30-06-2026;lluna;La Lluna 0,2° al sud de Nunki (ocultació);;;5
 01-07-2026;planeta;Mercuri en afeli;;;6
 02-07-2026;planeta;Mercuri 2° al sud d’Higiea;;;6
@@ -212,7 +212,7 @@ data;tipus;titol;codi;Hora;importancia
 17-07-2026;lluna;La Lluna 0,5° al sud de Règul (ocultació);;;5
 17-07-2026;lluna;La Lluna 2° al sud de Venus;;;5
 18-07-2026;lluna;La Lluna 3° al nord d’Iris;;;5
-20-07-2026;Dia mmundial de la Lluna;;;6
+20-07-2026;Esdeveniment;Dia mmundial de la Lluna;;;6
 21-07-2026;lluna;Quart creixent;;;5
 23-07-2026;planeta;Mercuri estacionari en ascensió recta;;;6
 24-07-2026;lluna;La Lluna 0,5° al sud d’Antares (ocultació);;;5
@@ -278,8 +278,8 @@ data;tipus;titol;codi;Hora;importancia
 14-09-2026;lluna;La Lluna 0,6° al nord de Venus (ocultació);;;5
 17-09-2026;lluna;La Lluna 0,4° al sud d’Antares (ocultació);;;5
 18-09-2026;lluna;Quart creixent;;;5
-19-09-2026;Dia internacional de l'observació lunar;assets/icons/special/inmo.png;;9
-19-09-2026;Dia mundial de l'Astronomia;;;5
+19-09-2026;Esdeveniment;Dia internacional de l'observació lunar;assets/icons/special/inmo.png;;9
+19-09-2026;Esdeveniment;Dia mundial de l'Astronomia;;;5
 19-09-2026;lluna;Lluna en apogeu;;;5
 19-09-2026;planeta;Mart 6° al sud de Pòl·lux;;;6
 20-09-2026;lluna;La Lluna 0,2° al sud de Nunki (ocultació);;;5
@@ -304,11 +304,11 @@ data;tipus;titol;codi;Hora;importancia
 07-10-2026;lluna;La Lluna 0,7° al sud de Règul (ocultació);;;5
 07-10-2026;lluna;La Lluna 2° al nord d’Higiea;;;5
 09-10-2026;meteors;Màxim de les Dracònides;assets/icons/special/pluja_meteors.png;;9
-09-10-2026;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
-10-10-2026;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
+09-10-2026;Esdeveniment;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
+10-10-2026;Esdeveniment;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
 10-10-2026;lluna;Lluna nova;;;5
-11-10-2026;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
-12-10-2026;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
+11-10-2026;Esdeveniment;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
+12-10-2026;Esdeveniment;Congres estatal d'associacions astronòmiques, Sabadell;assets/icons/special/faee.png;;9
 12-10-2026;lluna;La Lluna 2° al sud de Mercuri i 3° al nord de Venus;;;5
 12-10-2026;planeta;Màxima elongació est de Mercuri (25,2°);;;6
 14-10-2026;lluna;La Lluna 0,4° al sud d’Antares (ocultació);;;5
@@ -398,4 +398,5 @@ data;tipus;titol;codi;Hora;importancia
 29-12-2026;lluna;La Lluna 1,1° al nord d’Higiea (ocultació);;;5
 
 30-12-2026;lluna;Quart minvant;;;5
+
 
