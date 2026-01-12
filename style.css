@@ -133,17 +133,6 @@ body{
   grid-template-rows: auto 1fr;
   overflow: hidden;
 }
-/* ⭐ Astrofoto: marc més fosc com més aprop de Lluna nova (±3 dies) */
-.dia.astrofoto-3{ border-color: rgba(0,0,0,0.14); }
-.dia.astrofoto-2{ border-color: rgba(0,0,0,0.22); }
-.dia.astrofoto-1{ border-color: rgba(0,0,0,0.34); }
-.dia.astrofoto-0{ border-color: rgba(0,0,0,0.50); }
-
-/* Mode nocturn: mateix criteri però en vermell */
-body.nocturn .dia.astrofoto-3{ border-color: rgba(255,68,68,0.18); }
-body.nocturn .dia.astrofoto-2{ border-color: rgba(255,68,68,0.28); }
-body.nocturn .dia.astrofoto-1{ border-color: rgba(255,68,68,0.42); }
-body.nocturn .dia.astrofoto-0{ border-color: rgba(255,68,68,0.60); }
 
 .dia.buit{
   height: 56px;
@@ -675,4 +664,15 @@ body.nocturn .dia-btn{
   }
 }
 .dia-row-text{ flex: 1; }
+/* ⭐ Astrofoto: marc (inset) segons proximitat a Lluna nova (±3 dies) */
+.dia.astrofoto-3{ box-shadow: inset 0 0 0 2px rgba(0,0,0,0.16); }
+.dia.astrofoto-2{ box-shadow: inset 0 0 0 2px rgba(0,0,0,0.26); }
+.dia.astrofoto-1{ box-shadow: inset 0 0 0 2px rgba(0,0,0,0.40); }
+.dia.astrofoto-0{ box-shadow: inset 0 0 0 2px rgba(0,0,0,0.62); }
+
+/* Mode nocturn: el mateix però vermell */
+body.nocturn .dia.astrofoto-3{ box-shadow: inset 0 0 0 2px rgba(255,68,68,0.22); }
+body.nocturn .dia.astrofoto-2{ box-shadow: inset 0 0 0 2px rgba(255,68,68,0.34); }
+body.nocturn .dia.astrofoto-1{ box-shadow: inset 0 0 0 2px rgba(255,68,68,0.50); }
+body.nocturn .dia.astrofoto-0{ box-shadow: inset 0 0 0 2px rgba(255,68,68,0.70); }
 
