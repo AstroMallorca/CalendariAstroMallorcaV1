@@ -384,6 +384,22 @@ backA.addEventListener("click", (e) => {
         hour12: false
       }).format(d);
     }
+function sameLocalDay(a, baseDay){
+  return a.getFullYear() === baseDay.getFullYear() &&
+         a.getMonth() === baseDay.getMonth() &&
+         a.getDate() === baseDay.getDate();
+}
+
+// Mostra HH:MM, i si és un altre dia, afegeix (dd/mm)
+function fmtTimeHMWithDay(d, baseDay){
+  if (!d) return "—";
+  const hm = fmtTimeHM(d);
+  if (sameLocalDay(d, baseDay)) return hm;
+
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  return `${hm} (${dd}/${mm})`;
+}
 
     function fmtDurationHM(ms){
       if (!Number.isFinite(ms) || ms < 0) return "—";
@@ -749,6 +765,43 @@ function getRiseSetSameAsEfemerides(body, observer, iso){
     set:  evToDateAny(setEv),
   };
 }
+// ======= Rise/Set robust per a la LLUNA (per mostrar i calcular encara que sigui dia següent) =======
+function getMoonRiseSetWindowForDay(observer, iso){
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { rise:null, set:null };
+
+  const [Y,M,D] = iso.split("-").map(Number);
+  const dayStart = new Date(Y, M-1, D, 0, 0, 0, 0);   // 00:00 local
+  const t0 = Astronomy.MakeTime(dayStart);
+
+  // Mantinc alt=0 per consistència amb la teva app
+  const alt = 0;
+
+  // Propers esdeveniments després de 00:00 (fins a 2 dies)
+  const riseNextEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, t0, 2, alt);
+  const setNextEv  = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, t0, 2, alt);
+
+  const riseNext = evToDateAny(riseNextEv);
+  const setNext  = evToDateAny(setNextEv);
+
+  if (!riseNext && !setNext) return { rise:null, set:null };
+
+  // Si el primer que passa és una POSTA, la Lluna ja era amunt a les 00:00 (la sortida és d’ahir)
+  if (setNext && (!riseNext || setNext < riseNext)){
+    const risePrevEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, t0, -2, alt);
+    const risePrev = evToDateAny(risePrevEv);
+    return { rise: risePrev || dayStart, set: setNext };
+  }
+
+  // Si el primer que passa és una SORTIDA, cercam la POSTA posterior
+  if (riseNext){
+    const tRise = Astronomy.MakeTime(riseNext);
+    const setAfterRiseEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, tRise, 2, alt);
+    const setAfterRise = evToDateAny(setAfterRiseEv);
+    return { rise: riseNext, set: setAfterRise || setNext };
+  }
+
+  return { rise:null, set:setNext };
+}
 
     (async () => {
       const errEl = document.getElementById("err");
@@ -822,7 +875,7 @@ function getRiseSetSameAsEfemerides(body, observer, iso){
           throw new Error("Dia invàlid (dateStr). Revisa ?date=YYYY-MM-DD");
         }
 
-        const rs = getRiseSetSameAsEfemerides(Astronomy.Body.Moon, observer, dateStr);
+       const rs = getMoonRiseSetWindowForDay(observer, dateStr);
 const rise = rs.rise;
 const set  = rs.set;
         // ======= ⭐ Astrofoto (3 dies abans de Lluna nova) =======
@@ -919,8 +972,8 @@ function isWithin3DaysNearNewMoon(dayLocalNoon){
         }
 
 
-        if (rise) document.getElementById("kRise").textContent = fmtTimeHM(rise);
-        if (set)  document.getElementById("kSet").textContent  = fmtTimeHM(set);
+       document.getElementById("kRise").textContent = rise ? fmtTimeHMWithDay(rise, day0) : "—";
+document.getElementById("kSet").textContent  = set  ? fmtTimeHMWithDay(set,  day0) : "—";
 
         if (rise && set){
           const aboveMs = Math.max(0, set.getTime() - rise.getTime());
