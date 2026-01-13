@@ -384,6 +384,23 @@ backA.addEventListener("click", (e) => {
         hour12: false
       }).format(d);
     }
+    function sameLocalDay(a, baseDay){
+  return a.getFullYear() === baseDay.getFullYear() &&
+         a.getMonth() === baseDay.getMonth() &&
+         a.getDate() === baseDay.getDate();
+}
+
+// Mostra HH:MM, i si és un altre dia, afegeix (dd/mm)
+function fmtTimeHMWithDay(d, baseDay){
+  if (!d) return "—";
+  const hm = fmtTimeHM(d);
+  if (sameLocalDay(d, baseDay)) return hm;
+
+  const dd = String(d.getDate()).padStart(2,"0");
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  return `${hm} (${dd}/${mm})`;
+}
+
 
     function fmtDurationHM(ms){
       if (!Number.isFinite(ms) || ms < 0) return "—";
@@ -749,6 +766,54 @@ function getRiseSetSameAsEfemerides(body, observer, iso){
     set:  evToDateAny(setEv),
   };
 }
+// ======= Rise/Set robust per a la LLUNA (per mostrar i calcular encara que sigui dia següent) =======
+function getMoonRiseSetWindowForDay(observer, iso){
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { rise:null, set:null };
+
+  const [Y,M,D] = iso.split("-").map(Number);
+  const dayStart = new Date(Y, M-1, D, 0, 0, 0, 0);   // 00:00 local
+  const t0 = Astronomy.MakeTime(dayStart);
+
+  // Mantinc el teu "alt = 0" per consistència amb l'app
+  const alt = 0;
+
+  // Propers esdeveniments després de 00:00 (fins a 2 dies)
+  const riseNextEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, t0, 2, alt);
+  const setNextEv  = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, t0, 2, alt);
+
+  const riseNext = evToDateAny(riseNextEv);
+  const setNext  = evToDateAny(setNextEv);
+
+  // Si no tenim cap info, retornam nul
+  if (!riseNext && !setNext) return { rise:null, set:null };
+
+  // CAS A: si la propera cosa que passa és una POSTA (abans que la propera sortida),
+  // això vol dir que la Lluna ja era amunt a les 00:00 (la sortida real és d’ahir).
+  if (setNext && (!riseNext || setNext < riseNext)){
+    // Cercam la sortida anterior (cap enrere fins a 2 dies)
+    const risePrevEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, t0, -2, alt);
+    const risePrev = evToDateAny(risePrevEv);
+
+    // Si no la trobam, com a fallback prenem el començament del dia
+    return {
+      rise: risePrev || dayStart,
+      set: setNext
+    };
+  }
+
+  // CAS B: la propera cosa és una SORTIDA (normal)
+  if (riseNext){
+    // La posta que toca després d’aquesta sortida
+    const tRise = Astronomy.MakeTime(riseNext);
+    const setAfterRiseEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, tRise, 2, alt);
+    const setAfterRise = evToDateAny(setAfterRiseEv);
+
+    return { rise: riseNext, set: setAfterRise || setNext };
+  }
+
+  // Fallback
+  return { rise:null, set:setNext };
+}
 
     (async () => {
       const errEl = document.getElementById("err");
@@ -822,125 +887,42 @@ function getRiseSetSameAsEfemerides(body, observer, iso){
           throw new Error("Dia invàlid (dateStr). Revisa ?date=YYYY-MM-DD");
         }
 
-        const rs = getRiseSetSameAsEfemerides(Astronomy.Body.Moon, observer, dateStr);
+// ✅ Rise/Set robust per a la secció "Dades de la Lluna"
+const rs = getMoonRiseSetWindowForDay(observer, dateStr);
 const rise = rs.rise;
 const set  = rs.set;
-        // ======= ⭐ Astrofoto (3 dies abans de Lluna nova) =======
-        const astroCard = document.getElementById("astroCard");
 
-        function nextDayISO(iso){
-          const [y,m,d] = iso.split("-").map(Number);
-          const dt = new Date(y, m-1, d, 12, 0, 0);
-          dt.setDate(dt.getDate() + 1);
-          return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
-        }
+// Mostra també la data si cau a l’endemà
+if (rise) document.getElementById("kRise").textContent = fmtTimeHMWithDay(rise, day0);
+if (set)  document.getElementById("kSet").textContent  = fmtTimeHMWithDay(set,  day0);
 
-function isWithin3DaysNearNewMoon(dayLocalNoon){
-  const t0 = Astronomy.MakeTime(dayLocalNoon);
-
-  // propera Lluna nova (cap endavant) i l'anterior (cap enrere)
-  const nmNextTime = Astronomy.SearchMoonPhase(0, t0, +10);
-  const nmPrevTime = Astronomy.SearchMoonPhase(0, t0, -10);
-
-
-  const nmNext = evToDateAny(nmNextTime) || (nmNextTime && nmNextTime.date ? new Date(nmNextTime.date) : null);
-  const nmPrev = evToDateAny(nmPrevTime) || (nmPrevTime && nmPrevTime.date ? new Date(nmPrevTime.date) : null);
-
-  if (!nmNext && !nmPrev) return { ok:false, nmDate:null, diffDays:null, side:null };
-
-  const day0 = new Date(dayLocalNoon); day0.setHours(0,0,0,0);
-
-  function diffDaysTo(d){
-    const x = new Date(d); x.setHours(0,0,0,0);
-    return Math.floor(((x.getTime() - day0.getTime()) / 86400000) + 0.5);
-  }
-
-  let best = null;
-
-  if (nmNext){
-    const dn = diffDaysTo(nmNext); // pot ser 0..+∞
-    best = { nmDate: nmNext, diffDays: dn, side: (dn >= 0 ? "abans" : "despres") };
-  }
-
-  if (nmPrev){
-    const dp = diffDaysTo(nmPrev); // normalment <= 0
-    const cand = { nmDate: nmPrev, diffDays: dp, side: (dp <= 0 ? "despres" : "abans") };
-
-    if (!best || Math.abs(dp) < Math.abs(best.diffDays)) best = cand;
-  }
-
-  const ok = Math.abs(best.diffDays) <= 3;   // ✅ -3..+3
-  return { ok, ...best };
+// Durada (encara que la posta sigui demà)
+if (rise && set){
+  const aboveMs = Math.max(0, set.getTime() - rise.getTime());
+  document.getElementById("kAbove").textContent = fmtDurationHM(aboveMs);
+}else{
+  document.getElementById("kAbove").textContent = "—";
 }
 
-        const check = isWithin3DaysNearNewMoon(day);
-        console.log("[ASTRO]", dateStr, check);
+// Altura màxima i hora del "transit" dins el tram
+let transit = null;
+let altMax = null;
 
-        if (astroCard && check.ok){
-          const isoToday = (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) ? dateStr : isoFromLocalDate(day);
-          const isoTomorrow = nextDayISO(isoToday);
+if (rise && set){
+  const tr = findTransitByScan(Astronomy.Body.Moon, observer, rise, set, 5);
+  if (tr){
+    transit = tr.time;
+    altMax = tr.altDeg;
+  }
+}
 
-          // Sol: posta avui i sortida demà
-          const sunToday  = getRiseSetSameAsEfemerides(Astronomy.Body.Sun, observer, isoToday);
-          const sunTom    = getRiseSetSameAsEfemerides(Astronomy.Body.Sun, observer, isoTomorrow);
+if (transit){
+  const altTxt = Number.isFinite(altMax) ? Math.round(altMax) + "º" : "—";
+  document.getElementById("chartTitle").textContent = `${altTxt} (${fmtTimeHM(transit)})`;
+}else{
+  document.getElementById("chartTitle").textContent = "—";
+}
 
-          const sunset = sunToday.set;    // avui
-          const sunriseNext = sunTom.rise; // demà
-
-          // Lluna: posta avui i sortida demà
-          const moonToday = getRiseSetSameAsEfemerides(Astronomy.Body.Moon, observer, isoToday);
-          const moonTom   = getRiseSetSameAsEfemerides(Astronomy.Body.Moon, observer, isoTomorrow);
-
-          const moonset = moonToday.set;       // avui
-          const moonriseNext = moonTom.rise;   // demà
-
-          // Inici = max(posta de sol, posta de la lluna)  (si falta una, usam l'altra)
-          let start = null;
-          if (sunset && moonset) start = (moonset > sunset) ? moonset : sunset;
-          else start = moonset || sunset;
-
-          // Final = min(sortida sol demà, sortida lluna demà) (si falta una, usam l'altra)
-          let end = null;
-          if (sunriseNext && moonriseNext) end = (moonriseNext < sunriseNext) ? moonriseNext : sunriseNext;
-          else end = moonriseNext || sunriseNext;
-
-          // Mostram només si tenim un tram coherent
-          if (start && end && end > start){
-            document.getElementById("astroStart").textContent = fmtTimeHM(start);
-            document.getElementById("astroEnd").textContent   = fmtTimeHM(end);
-            document.getElementById("astroDur").textContent   = fmtDurationHM(end.getTime() - start.getTime());
-            astroCard.style.display = "block";
-          }else{
-            // si no podem calcular bé, no mostram el card (per no confondre)
-            astroCard.style.display = "none";
-          }
-        }else if (astroCard){
-          astroCard.style.display = "none";
-        }
-
-
-        if (rise) document.getElementById("kRise").textContent = fmtTimeHM(rise);
-        if (set)  document.getElementById("kSet").textContent  = fmtTimeHM(set);
-
-        if (rise && set){
-          const aboveMs = Math.max(0, set.getTime() - rise.getTime());
-          document.getElementById("kAbove").textContent = fmtDurationHM(aboveMs);
-        }
-
-        let transit = null;
-        let altMax = null;
-        if (rise && set){
-          const tr = findTransitByScan(Astronomy.Body.Moon, observer, rise, set, 5);
-          if (tr){
-            transit = tr.time;
-            altMax = tr.altDeg;
-          }
-        }
-
-        if (transit){
-          const altTxt = Number.isFinite(altMax) ? Math.round(altMax) + "º" : "—";
-          document.getElementById("chartTitle").textContent = `${altTxt} (${fmtTimeHM(transit)})`;
-        }
 
       }catch(e){
         console.error(e);
