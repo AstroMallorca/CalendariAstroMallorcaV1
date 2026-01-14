@@ -635,6 +635,24 @@ function icsTimeRange(dtstart, dtend){
   if (a && b) return `${a}–${b}`;
   return a || "";
 }
+// Converteix text (LOCATION/DESCRIPTION) en HTML segur i amb enllaços clicables
+function escapeHTML(s){
+  return (s ?? "").toString()
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+function linkifyText(s){
+  // DESCRIPTION de Google Calendar sol dur \\n
+  const txt = escapeHTML(s).replace(/\\n/g, "\n");
+  const withBreaks = txt.replace(/\r?\n/g, "<br>");
+  // enllaços http/https
+  return withBreaks.replace(/(https?:\/\/[^\s<]+)/g, (m) => {
+    return `<a href="${m}" target="_blank" rel="noopener">${m}</a>`;
+  });
+}
 
 // === Carregues ===
 async function loadJSON(path) {
@@ -1118,9 +1136,25 @@ async function obreDia(iso) {
   : `<h3>Efemèrides</h3><p>Cap destacat.</p>`;
 
 
-  const actHtml = act.length
-    ? `<h3>Activitats AstroMallorca</h3><ul>${act.map(a => `<li><b>${a.titol}</b>${a.lloc ? " — " + a.lloc : ""}${a.url ? ` — <a href="${a.url}" target="_blank">Enllaç</a>` : ""}</li>`).join("")}</ul>`
-    : `<h3>Activitats AstroMallorca</h3><p>Cap activitat.</p>`;
+const actHtml = act.length
+  ? `<h3>Activitats AstroMallorca</h3><ul class="dia-llista">${
+      act.map(a => {
+        const titol = escapeHTML(a.titol || "Activitat");
+        const hora  = icsTimeRange(a.dtstart, a.dtend);
+        const lloc  = (a.lloc || "").trim();
+        const info  = (a.descripcio || "").trim();
+        const url   = (a.url || "").trim();
+
+        return `<li>
+          <b>${titol}</b>${hora ? ` — <span class="dia-time">${hora}</span>` : ""}
+          ${lloc ? `<div class="dia-note"><b>Lloc:</b> ${linkifyText(lloc)}</div>` : ""}
+          ${info ? `<div class="dia-note"><b>Info:</b> ${linkifyText(info)}</div>` : ""}
+          ${url ? `<div class="dia-note"><a href="${url}" target="_blank" rel="noopener">Enllaç</a></div>` : ""}
+        </li>`;
+      }).join("")
+    }</ul>`
+  : `<h3>Activitats AstroMallorca</h3><p>Cap activitat.</p>`;
+
   
 // === Efemèrides històriques (del teu JSON/CSV anual) ===
 const [yStr, mStr] = iso.split("-");
