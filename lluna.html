@@ -766,11 +766,14 @@ function getRiseSetSameAsEfemerides(body, observer, iso){
   };
 }
 // ======= Rise/Set robust per a la LLUNA (per mostrar i calcular encara que sigui dia següent) =======
+// ======= Rise/Set robust per a la LLUNA amb prioritat "vespre del mateix dia" =======
 function getMoonRiseSetWindowForDay(observer, iso){
   if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return { rise:null, set:null };
 
   const [Y,M,D] = iso.split("-").map(Number);
   const dayStart = new Date(Y, M-1, D, 0, 0, 0, 0);   // 00:00 local
+  const dayEnd   = new Date(Y, M-1, D, 23, 59, 59, 999);
+
   const t0 = Astronomy.MakeTime(dayStart);
 
   // Mantinc alt=0 per consistència amb la teva app
@@ -783,16 +786,65 @@ function getMoonRiseSetWindowForDay(observer, iso){
   const riseNext = evToDateAny(riseNextEv);
   const setNext  = evToDateAny(setNextEv);
 
+  // Helper: comprovar si un instant és dins un interval
+  const contains = (win, t) => win && win.rise && win.set && (t >= win.rise) && (t <= win.set);
+
+  // Helper: solapament amb el dia seleccionat
+  const overlapMs = (win) => {
+    if (!win || !win.rise || !win.set) return 0;
+    const a = Math.max(win.rise.getTime(), dayStart.getTime());
+    const b = Math.min(win.set.getTime(),  dayEnd.getTime());
+    return Math.max(0, b - a);
+  };
+
+  // Helper: durada total del tram
+  const durMs = (win) => (win && win.rise && win.set) ? (win.set.getTime() - win.rise.getTime()) : -1;
+
+  // Moment de prioritat: vespre del mateix dia (21:00)
+  const pref = new Date(dayStart);
+  pref.setHours(21, 0, 0, 0);
+
+  // Si no hi ha events, fora
   if (!riseNext && !setNext) return { rise:null, set:null };
 
-  // Si el primer que passa és una POSTA, la Lluna ja era amunt a les 00:00 (la sortida és d’ahir)
+  // Cas A: el primer que passa és una POSTA => la Lluna ja era amunt a les 00:00
+  // Això crea DOS candidats:
+  //  1) Tram "heretat" (ahir vespre -> posta d’avui): risePrev -> setNext
+  //  2) Tram "principal del vespre" (sortida d’avui -> posta de demà): riseNext -> setAfterRise
   if (setNext && (!riseNext || setNext < riseNext)){
+    // Candidat 1: risePrev -> setNext
     const risePrevEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, +1, t0, -2, alt);
     const risePrev = evToDateAny(risePrevEv);
-    return { rise: risePrev || dayStart, set: setNext };
+
+    const candPrev = { rise: risePrev || dayStart, set: setNext };
+
+    // Candidat 2: riseNext -> setAfterRise (si tenim riseNext)
+    let candNext = null;
+    if (riseNext){
+      const tRise = Astronomy.MakeTime(riseNext);
+      const setAfterRiseEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, tRise, 2, alt);
+      const setAfterRise = evToDateAny(setAfterRiseEv);
+      candNext = { rise: riseNext, set: setAfterRise || setNext };
+    }
+
+    // 🔥 Regla: prioritzar el tram que CONTÉ el vespre (21:00) del mateix dia.
+    // Si cap el conté, triar el que té més solapament amb el dia.
+    if (candNext && contains(candNext, pref) && !contains(candPrev, pref)) return candNext;
+    if (contains(candPrev, pref) && (!candNext || !contains(candNext, pref))) return candPrev;
+
+    const oPrev = overlapMs(candPrev);
+    const oNext = candNext ? overlapMs(candNext) : -1;
+
+    if (candNext && oNext > oPrev) return candNext;
+    if (oPrev > oNext) return candPrev;
+
+    // Empat: tria el més llarg
+    if (candNext && durMs(candNext) > durMs(candPrev)) return candNext;
+    return candPrev;
   }
 
-  // Si el primer que passa és una SORTIDA, cercam la POSTA posterior
+  // Cas B: el primer que passa és una SORTIDA
+  // Tram natural: riseNext -> posta posterior
   if (riseNext){
     const tRise = Astronomy.MakeTime(riseNext);
     const setAfterRiseEv = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, tRise, 2, alt);
@@ -800,6 +852,7 @@ function getMoonRiseSetWindowForDay(observer, iso){
     return { rise: riseNext, set: setAfterRise || setNext };
   }
 
+  // Fallback
   return { rise:null, set:setNext };
 }
 
