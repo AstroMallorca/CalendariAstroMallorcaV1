@@ -736,4 +736,10 @@ html.deeplink-opening #swipeArea{
 html.deeplink-opening .topbar{
   visibility: hidden;
 }
+.esp-bullet{
+  display:inline-block;
+  width: 14px;
+  flex: 0 0 14px;
+  line-height: 1;
+}
 
